@@ -43,12 +43,14 @@ public class FXMLDocumentController implements Initializable {
     @FXML private Button cell7;
     @FXML private Button cell8;
     @FXML private Button cell9;
-    @FXML private MediaView victoryVideo;
+    private MediaView victoryVideo;
     
 
     private GameBoard gameBoard;
     private Image xImage;
     private Image oImage;
+    @FXML
+    private Button recordGame;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
