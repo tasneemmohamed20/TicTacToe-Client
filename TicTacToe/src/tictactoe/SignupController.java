@@ -16,6 +16,8 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SignupController {
 
@@ -51,12 +53,21 @@ public class SignupController {
             if (result > 0) {
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Signup successful!");
                 clearFields();
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
+            Parent root = loader.load();
+
+         
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Signup Failed", "Could not sign up. Please try again.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Database Error", "Error: " + e.getMessage());
+        } catch (IOException ex) {
+            Logger.getLogger(SignupController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -68,13 +79,7 @@ public class SignupController {
         passTF.clear();
     }
 
-    /**
-     * Shows an alert dialog with the specified type, title, and message.
-     *
-     * @param alertType The type of the alert (e.g., ERROR, INFORMATION).
-     * @param title     The title of the alert.
-     * @param message   The message displayed in the alert.
-     */
+   
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
@@ -83,19 +88,14 @@ public class SignupController {
         alert.showAndWait();
     }
 
-    /**
-     * Navigates to the Login page when the login navigation button is clicked.
-     *
-     * @param event Action event triggered by clicking the login navigation button.
-     */
     @FXML
     private void handleLoginNavigation(ActionEvent event) {
         try {
-            // Load the Login.fxml file
+           
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
             Parent root = loader.load();
 
-            // Get the current stage and set the new scene
+         
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();

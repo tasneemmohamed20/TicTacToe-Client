@@ -8,7 +8,7 @@ import java.sql.SQLException;
 
 public class DAO {
 
-    private static final String URL = "jdbc:derby://localhost:1527/Users1";
+    private static final String URL = "jdbc:derby://localhost:1527/Users";
     private static final String USER = "root";
     private static final String PASSWORD = "root";
     private Connection connection;
