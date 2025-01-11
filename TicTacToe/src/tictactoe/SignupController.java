@@ -25,8 +25,6 @@ import models.UserModel;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class SignupController {
 
@@ -44,7 +42,7 @@ public class SignupController {
 
     @FXML
 
-    public void handleSignup(MouseEvent event) {
+    public void handleSignup(ActionEvent event) {
         try {
             String username = usernameTF.getText().trim();
             String password = passTF.getText().trim();
@@ -72,22 +70,10 @@ public class SignupController {
                 showAlert(Alert.AlertType.INFORMATION, "Success", response.getMessage());
                 clearFields();
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
-            Parent root = loader.load();
-
-         
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            	Parent root = loader.load();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Error", response.getMessage());
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Error: " + e.getMessage());
-        } catch (IOException ex) {
-            Logger.getLogger(SignupController.class.getName()).log(Level.SEVERE, null, ex);
-
             
             // Close resources
             dis.close();
@@ -96,7 +82,6 @@ public class SignupController {
             
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Error", "Connection failed: " + e.getMessage());
-
         }
     }
 
@@ -118,11 +103,11 @@ public class SignupController {
     @FXML
     private void handleLoginNavigation(ActionEvent event) {
         try {
-           
+            // Load the Login.fxml file
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
             Parent root = loader.load();
 
-         
+            // Get the current stage and set the new scene
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();
