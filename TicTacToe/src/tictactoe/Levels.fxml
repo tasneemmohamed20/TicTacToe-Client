@@ -18,7 +18,7 @@
                <children>
                   <Button id="whiteBtn" fx:id="easyBtn" layoutX="73.0" layoutY="70.0" mnemonicParsing="false" onAction="#handleSignupNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Easy" />
                   <Button id="whiteBtn" fx:id="mediumBtn" layoutX="62.0" layoutY="112.0" mnemonicParsing="false" style="-fx-background-color: #C5A0D7; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" text="Medium" />
-                  <Button id="whiteBtn" fx:id="hardBtn" layoutX="72.0" layoutY="152.0" mnemonicParsing="false" onAction="#handleSignupNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Hard" />
+                  <Button id="whiteBtn" fx:id="hardBtn" layoutX="72.0" layoutY="152.0" mnemonicParsing="false" onAction="#handleHardModeNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Hard" />
                </children>
             </AnchorPane>
          </children>
