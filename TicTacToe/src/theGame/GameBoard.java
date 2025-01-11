@@ -193,5 +193,95 @@ public class GameBoard {
         }
     
     }    
-     
+
+    // Evaluate the game board to calculate a score for the AI
+    private int evaluate() {
+         for (int row = 0; row < boardSize; row++) {
+             // Row check
+             if (gameBoard[row][0] == gameBoard[row][1] && gameBoard[row][1] == gameBoard[row][2]) {
+                 if (gameBoard[row][0] == XO.X) return 10;
+                 if (gameBoard[row][0] == XO.O) return -10;
+             }
+
+             // Column check
+             if (gameBoard[0][row] == gameBoard[1][row] && gameBoard[1][row] == gameBoard[2][row]) {
+                 if (gameBoard[0][row] == XO.X) return 10;
+                 if (gameBoard[0][row] == XO.O) return -10;
+             }
+         }
+
+         // Diagonal check
+         if (gameBoard[0][0] == gameBoard[1][1] && gameBoard[1][1] == gameBoard[2][2]) {
+             if (gameBoard[0][0] == XO.X) return 10;
+             if (gameBoard[0][0] == XO.O) return -10;
+         }
+         if (gameBoard[0][2] == gameBoard[1][1] && gameBoard[1][1] == gameBoard[2][0]) {
+             if (gameBoard[0][2] == XO.X) return 10;
+             if (gameBoard[0][2] == XO.O) return -10;
+         }
+
+         return 0; // No winner
+    }
+
+    // Minimax function
+    public int minimax(int depth, boolean isMaximizing) {
+        int score = evaluate();
+        if (score == 10 || score == -10) return score;
+        if (!isAvailMoves()) return 0; // Draw
+
+        if (isMaximizing) {
+            int best = Integer.MIN_VALUE;
+            for (int row = 0; row < boardSize; row++) {
+                for (int col = 0; col < boardSize; col++) {
+                    if (!isCellMarked(row, col)) {
+                        gameBoard[row][col] = XO.X; // AI move
+                        availMoves--;
+                        best = Math.max(best, minimax(depth + 1, false));
+                        gameBoard[row][col] = XO.B; // Undo move
+                        availMoves++;
+                    }
+                }
+            }
+            return best;
+        } else {
+            int best = Integer.MAX_VALUE;
+            for (int row = 0; row < boardSize; row++) {
+                for (int col = 0; col < boardSize; col++) {
+                    if (!isCellMarked(row, col)) {
+                        gameBoard[row][col] = XO.O; // Player move
+                        availMoves--;
+                        best = Math.min(best, minimax(depth + 1, true));
+                        gameBoard[row][col] = XO.B; // Undo move
+                        availMoves++;
+                    }
+                }
+            }
+            return best;
+        }
+    }
+
+    // Find the best move for AI
+    public int[] findBestMove() {
+        int bestScore = Integer.MIN_VALUE;
+        int[] bestMove = {-1, -1};
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                if (!isCellMarked(row, col)) {
+                    gameBoard[row][col] = XO.X; // AI move
+                    availMoves--;
+                    int moveScore = minimax(0, false);
+                    gameBoard[row][col] = XO.B; // Undo move
+                    availMoves++;
+                    if (moveScore > bestScore) {
+                        bestScore = moveScore;
+                        bestMove[0] = row;
+                        bestMove[1] = col;
+                    }
+                }
+            }
+        }
+
+        return bestMove;
+    }
 }

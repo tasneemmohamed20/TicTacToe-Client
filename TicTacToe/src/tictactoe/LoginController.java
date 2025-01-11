@@ -27,11 +27,11 @@ import javafx.stage.Stage;
 public class LoginController implements Initializable {
 
     @FXML
-    private Button onlineBtn;
+    private Button easyBtn;
     @FXML
-    private Button guestBtn;
+    private Button mediumBtn;
     @FXML
-    private Button localBtn;
+    private Button hardBtn;
 
 
     /**
@@ -57,8 +57,7 @@ public class LoginController implements Initializable {
     }
 }
 
-    @FXML
-    private void handleLevelsNavigation(ActionEvent event) {
+    public void handleLevelsNavigation(ActionEvent event) {
         try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("Levels.fxml"));
         Parent signupRoot = loader.load();
@@ -72,8 +71,7 @@ public class LoginController implements Initializable {
     }
     }
 
-    @FXML
-    private void handleLocalNavigation(ActionEvent event) {
+    public void handleLocalNavigation(ActionEvent event) {
         try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("FXMLDocument.fxml"));
         Parent signupRoot = loader.load();
@@ -85,6 +83,21 @@ public class LoginController implements Initializable {
     } catch (IOException e) {
         e.printStackTrace();
     }
+    }
+
+    @FXML
+    public void handleHardModeNavigation(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/robot/FXML.fxml"));
+            Parent signupRoot = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene signupScene = new Scene(signupRoot);
+            stage.setScene(signupScene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } 
     }
 
     
