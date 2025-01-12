@@ -26,7 +26,7 @@ import theGame.GameBoard;
 import theGame.XO;
 import java.net.URL;
 
-public class FXMLDocumentController implements Initializable {
+public class LocalHvsHcontroller implements Initializable {
     private int scoreX = 0;  
     private int scoreO = 0;  
 
