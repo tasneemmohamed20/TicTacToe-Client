@@ -2,6 +2,9 @@ package tictactoe;
 
 import DAO.DAO;
 import Users.Users;
+import com.google.gson.Gson;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,8 +16,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import models.RequsetModel;
+import models.ResponsModel;
+import models.UserModel;
+
+
 
 import java.io.IOException;
+import java.net.Socket;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,28 +39,37 @@ public class SignupController {
     @FXML
     private TextField passTF;
 
-    /**
-     * Handles the signup process by validating input and adding the user to the database.
-     *
-     * @param event Mouse event triggered by clicking the signup button.
-     */
+    private PlayerSocket playerSocket;
+
+
     @FXML
+
     public void handleSignup(MouseEvent event) {
-        String username = usernameTF.getText().trim();
-        String password = passTF.getText().trim();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Username and password cannot be empty.");
-            return;
-        }
-
         try {
-            DAO dao = new DAO();
-            Users user = new Users(username, password);
-            int result = dao.addUser(user);
-
-            if (result > 0) {
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Signup successful!");
+            String username = usernameTF.getText().trim();
+            String password = passTF.getText().trim();
+            
+            if (username.isEmpty() || password.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Validation Error", "Username and password cannot be empty");
+                return;
+            }
+    
+            Socket socket = new Socket("localhost", 5005); // Create new socket connection
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            
+            UserModel user = new UserModel(0, username, password, "0", "offline");
+            RequsetModel request = new RequsetModel("register", user);
+            
+            String jsonRequest = new Gson().toJson(request);
+            dos.writeUTF(jsonRequest); // Use writeUTF instead of println
+            dos.flush(); // Make sure to flush the stream
+            
+            String jsonResponse = dis.readUTF(); // Use readUTF instead of readLine
+            ResponsModel response = new Gson().fromJson(jsonResponse, ResponsModel.class);
+    
+            if (response.getStatus().equals("success")) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", response.getMessage());
                 clearFields();
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
             Parent root = loader.load();
@@ -61,25 +79,34 @@ public class SignupController {
             stage.setScene(new Scene(root));
             stage.show();
             } else {
-                showAlert(Alert.AlertType.ERROR, "Signup Failed", "Could not sign up. Please try again.");
+                showAlert(Alert.AlertType.ERROR, "Error", response.getMessage());
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Database Error", "Error: " + e.getMessage());
         } catch (IOException ex) {
             Logger.getLogger(SignupController.class.getName()).log(Level.SEVERE, null, ex);
+
+            
+            // Close resources
+            dis.close();
+            dos.close();
+            socket.close();
+            
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Connection failed: " + e.getMessage());
+
         }
     }
 
-    /**
-     * Clears the input fields.
-     */
+
+
     private void clearFields() {
         usernameTF.clear();
         passTF.clear();
     }
 
-   
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
