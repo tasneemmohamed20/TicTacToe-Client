@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.Pane?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LoginController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.MenuController">
    <bottom>
       <FlowPane alignment="CENTER" prefHeight="69.0" prefWidth="600.0" BorderPane.alignment="CENTER" />
    </bottom>
@@ -16,7 +16,7 @@
             <Pane layoutX="200.0" layoutY="161.0" prefHeight="200.0" prefWidth="200.0" />
             <AnchorPane layoutX="200.0" layoutY="103.0" prefHeight="251.0" prefWidth="209.0" AnchorPane.bottomAnchor="46.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="191.0" AnchorPane.topAnchor="103.0">
                <children>
-                  <Button id="whiteBtn" fx:id="onlineBtn" layoutX="74.0" layoutY="70.0" mnemonicParsing="false" onAction="#handleSignupNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Online" />
+                  <Button id="whiteBtn" fx:id="onlineBtn" layoutX="74.0" layoutY="70.0" mnemonicParsing="false" onAction="#handleOnlineNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Online" />
                   <Button id="whiteBtn" fx:id="guestBtn" layoutX="76.0" layoutY="112.0" mnemonicParsing="false" onAction="#handleLevelsNavigation" style="-fx-background-color: #C5A0D7; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" text="Guest" />
                   <Button id="whiteBtn" fx:id="localBtn" layoutX="78.0" layoutY="151.0" mnemonicParsing="false" onAction="#handleLocalNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Local" />
                </children>
