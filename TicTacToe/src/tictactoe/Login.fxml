@@ -25,7 +25,7 @@
                         
                         <VBox alignment="CENTER" spacing="10.0">
                            <children>
-                              <Button fx:id="loginBTN" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Login" />
+                              <Button fx:id="loginBTN" onAction="#handleLogin" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Login" />
                               <Button fx:id="signupNav" onAction="#handleSignupNavigation" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: transparent; -fx-text-fill: #ffcc00; -fx-font-size: 14px; -fx-border-color: #ffcc00; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Don't have an account? Sign up" />
                            </children>
                         </VBox>

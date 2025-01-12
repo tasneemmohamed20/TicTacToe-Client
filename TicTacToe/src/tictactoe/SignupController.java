@@ -101,17 +101,18 @@ public class SignupController {
     @FXML
     private void handleLoginNavigation(ActionEvent event) {
         try {
-            // Load the Login.fxml file
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
-            Parent root = loader.load();
+            Parent signupRoot = loader.load();
 
-            // Get the current stage and set the new scene
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            Scene signupScene = new Scene(signupRoot);
+            stage.setScene(signupScene);
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to the login page. Please check if Login.fxml exists.");
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to the signup page.");
         }
     }
+
+    
 }
