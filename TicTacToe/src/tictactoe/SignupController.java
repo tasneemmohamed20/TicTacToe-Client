@@ -42,7 +42,7 @@ public class SignupController {
 
     @FXML
 
-    public void handleSignup(MouseEvent event) {
+    public void handleSignup(ActionEvent event) {
         try {
             String username = usernameTF.getText().trim();
             String password = passTF.getText().trim();
