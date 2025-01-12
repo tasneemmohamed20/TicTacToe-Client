@@ -1,61 +1,56 @@
 package tictactoe;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.Socket;
 
 public class PlayerSocket {
-    private static Socket socket;
-    private static DataInputStream dis;
-    private static PrintStream ps;
-    private static String ip = "127.0.0.1";
-    private static int portNum = 5005; 
-    
+    private static PlayerSocket instance;
+    private Socket socket;
+    private DataInputStream dis;
+    private DataOutputStream dos;
+    private static final String IP = "127.0.0.1";
+    private static final int PORT = 5005;
 
-    public static void setSocket(Socket aSocket) {
-        socket = aSocket;
-    }
-    
-    public PlayerSocket(){
-    
+    private PlayerSocket() {
         try {
-            socket = new Socket(ip, portNum);
+            socket = new Socket(IP, PORT);
             dis = new DataInputStream(socket.getInputStream());
-            ps = new PrintStream(socket.getOutputStream());
-            
-        } catch (IOException iOException) {
-            iOException.printStackTrace();  // TODO: NEEDS AN ALERT
+            dos = new DataOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            System.err.println("Error connecting to server: " + e.getMessage());
+            e.printStackTrace();
         }
-    
     }
 
-    public static DataInputStream getDis() {
+    public static PlayerSocket getInstance() {
+        if (instance == null) {
+            synchronized (PlayerSocket.class) {
+                if (instance == null) {
+                    instance = new PlayerSocket();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public DataInputStream getDataInputStream() {
         return dis;
     }
 
-    public static PrintStream getPs() {
-        return ps;
+    public DataOutputStream getDataOutputStream() {
+        return dos;
     }
 
-    public static String getIp() {
-        return ip;
+    public void closeConnection() {
+        try {
+            if (dis != null) dis.close();
+            if (dos != null) dos.close();
+            if (socket != null) socket.close();
+        } catch (IOException e) {
+            System.err.println("Error closing connection: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-
-    public static void setIp(String ip) {
-        PlayerSocket.ip = ip;
-    }
-
-    public static int getPortNum() {
-        return portNum;
-    }
-
-    public static void setPortNum(int portNum) {
-        PlayerSocket.portNum = portNum;
-    }
-    
-    public static Socket getSocket(){
-        return socket;
-    }
-    
 }
