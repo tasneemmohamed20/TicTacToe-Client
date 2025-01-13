@@ -25,6 +25,8 @@ import javafx.util.Duration;
 import theGame.GameBoard;
 import theGame.XO;
 import java.net.URL;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.ButtonBar;
 
 public class LocalHvsHcontroller implements Initializable {
@@ -98,7 +100,7 @@ public class LocalHvsHcontroller implements Initializable {
                     //showAlert("Game Over", gameBoard.getWining() + " wins!", AlertType.INFORMATION);
                     showVideoAlert(gameBoard.getWining() + " wins!", "/assets/bravo.mp4");
                 }
-                showGameOverAlert();
+                //showGameOverAlert();
 
             }
         }
@@ -200,36 +202,60 @@ public class LocalHvsHcontroller implements Initializable {
         alert.showAndWait();
     }
 
+    /* private void showVideoAlert(String title, String videoPath) {
+        try {
+            Alert alert = new Alert(Alert.AlertType.NONE);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+
+            Media media = new Media(getClass().getResource(videoPath).toExternalForm());
+            MediaPlayer mediaPlayer = new MediaPlayer(media);
+            MediaView mediaView = new MediaView(mediaPlayer);
+
+            mediaView.setFitWidth(400);
+            mediaView.setFitHeight(400);
+
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.setContent(mediaView);
+
+            ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            dialogPane.getButtonTypes().add(closeButton);
+
+            mediaPlayer.play();
+
+            alert.setOnHidden(e -> mediaPlayer.stop());
+
+            alert.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+        }
+    }*/
     private void showVideoAlert(String title, String videoPath) {
-    try {
-        Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
+        try {
 
-        Media media = new Media(getClass().getResource(videoPath).toExternalForm());
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        MediaView mediaView = new MediaView(mediaPlayer);
-       
-        mediaView.setFitWidth(400);
-        mediaView.setFitHeight(400);
-       
-        DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.setContent(mediaView);
-       
-        ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
-        
-        dialogPane.getButtonTypes().add(closeButton);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("VideoLayout.fxml"));
 
-        mediaPlayer.play();
+            Parent root = loader.load();
 
-        alert.setOnHidden(e -> mediaPlayer.stop());
+            VideoLayoutController controller = loader.getController();
 
-        alert.showAndWait();
-    } catch (Exception e) {
-        e.printStackTrace();
-        showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+            controller.initialize();
+
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.show();
+            controller.setOnNewGameAction(() -> {
+                System.out.println("Starting a new game...");
+                resetGame();
+                stage.close();
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+        }
     }
-}
-
 
 }
