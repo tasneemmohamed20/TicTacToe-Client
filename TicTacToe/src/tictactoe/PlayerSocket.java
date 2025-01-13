@@ -28,20 +28,34 @@ public class PlayerSocket {
         if (instance == null) {
             synchronized (PlayerSocket.class) {
                 if (instance == null) {
-                    instance = new PlayerSocket();
-                }
+                instance = new PlayerSocket();
+            }
             }
         }
         return instance;
     }
+    public synchronized Socket getSocket() {
+        return socket;
+    }
+     public void initializeConnection() throws IOException {
+        if (socket == null || socket.isClosed()) {
+            
+            socket = new Socket(IP, PORT);
+            dis = new DataInputStream(socket.getInputStream());
+            dos = new DataOutputStream(socket.getOutputStream());
+        }
+    }
 
-    public DataInputStream getDataInputStream() {
+    public synchronized DataInputStream getDataInputStream() throws IOException {
+        initializeConnection();
         return dis;
     }
 
-    public DataOutputStream getDataOutputStream() {
+    public synchronized DataOutputStream getDataOutputStream() throws IOException {
+        initializeConnection();
         return dos;
     }
+
 
     public void closeConnection() {
         try {

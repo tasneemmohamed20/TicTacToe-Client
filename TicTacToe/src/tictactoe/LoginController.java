@@ -24,12 +24,12 @@ public class LoginController {
     private TextField usernameTF;
     @FXML
     private PasswordField passTF;
+    String score;
 
     @FXML
     public void handleSignupNavigation(ActionEvent event) {
         navigateToScreen(event, "Signup.fxml", "Signup");
     }
-
    
     @FXML
     public void handleLogin(ActionEvent event) {
@@ -49,7 +49,11 @@ public class LoginController {
 
             if ("success".equals(response.getStatus())) {
                 showAlert(Alert.AlertType.INFORMATION, "Login Successful", response.getMessage());
-                navigateToScreen(event, "LocalHvsH.fxml", "Dashboard");
+                score = (String)response.getData();
+                System.out.println(score);
+                FXMLLoader loader = navigateToScreen(event, "dashboard.fxml", "Dashboard");
+                 DashboardController dashboardController = loader.getController();
+                dashboardController.setScore(score);
             } else {
                 showAlert(Alert.AlertType.ERROR, "Login Failed", response.getMessage());
             }
@@ -83,9 +87,10 @@ public class LoginController {
     }
 
 
-    private void navigateToScreen(ActionEvent event, String fxml, String title) {
+    private FXMLLoader navigateToScreen(ActionEvent event, String fxml, String title) {
+        FXMLLoader loader = null;
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+            loader = new FXMLLoader(getClass().getResource(fxml));
             Parent root = loader.load();
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
@@ -95,5 +100,6 @@ public class LoginController {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to " + title + " screen.");
         }
+        return loader;
     }
 }
