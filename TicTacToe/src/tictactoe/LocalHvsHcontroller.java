@@ -94,8 +94,9 @@ public class LocalHvsHcontroller implements Initializable {
             if (gameBoard.isGameOver()) {
                 updateScores();
                 if (gameBoard.getWining() == XO.B) {
-                    showAlert("Game Over", "Give it another try!", AlertType.INFORMATION);
-
+                    //showAlert("Game Over", "Give it another try!", AlertType.INFORMATION);
+                    showVideoAlert("صحاب وحبايب", "/assets/draw.mp4");
+                    //showGameOverAlert();
                 } else {
                     //showAlert("Game Over", gameBoard.getWining() + " wins!", AlertType.INFORMATION);
                     showVideoAlert(gameBoard.getWining() + " wins!", "/assets/bravo.mp4");
@@ -241,8 +242,8 @@ public class LocalHvsHcontroller implements Initializable {
 
             VideoLayoutController controller = loader.getController();
 
-            controller.initialize();
-
+            controller.initialize(videoPath);
+            controller.setWinnerText(title);
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
             stage.show();

@@ -11,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
@@ -23,6 +24,8 @@ import javafx.scene.media.MediaView;
 public class VideoLayoutController implements Initializable {
 
     @FXML
+    private Label winnerLabel;
+    @FXML
     private MediaView mediaView;
     @FXML
     private Button newGame;
@@ -30,25 +33,24 @@ public class VideoLayoutController implements Initializable {
     private Button close;
 
     private MediaPlayer mediaPlayer;
-private Runnable onNewGameAction;
-    
-    public void initialize() {
-    try {
-        String videoPath = getClass().getResource("/assets/bravo.mp4").toExternalForm();
-        if (videoPath != null) {
-            Media media = new Media(videoPath);
-            mediaPlayer = new MediaPlayer(media);
-            mediaView.setMediaPlayer(mediaPlayer);
-            mediaPlayer.play();
-           
-        } else {
-            System.out.println("Video path is null. Check the resource path.");
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
+    private Runnable onNewGameAction;
 
+    public void initialize(String path) {
+        try {
+            String videoPath = getClass().getResource(path).toExternalForm();
+            if (videoPath != null) {
+                Media media = new Media(videoPath);
+                mediaPlayer = new MediaPlayer(media);
+                mediaView.setMediaPlayer(mediaPlayer);
+                mediaPlayer.play();
+
+            } else {
+                System.out.println("Video path is null. Check the resource path.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void setOnNewGameAction(Runnable onNewGameAction) {
         this.onNewGameAction = onNewGameAction;
@@ -71,9 +73,13 @@ private Runnable onNewGameAction;
         System.exit(0);
     }
 
+    public void setWinnerText(String text) {
+        winnerLabel.setText(text);
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

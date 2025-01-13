@@ -19,7 +19,7 @@
                         <Image url="/assets/tictactoe.png" />
                     </image>
                 </ImageView>
-                <Label alignment="CENTER" layoutX="214.0" layoutY="25.0" style="-fx-font-size: 50px; -fx-font-weight: bold;" text="Winner" textFill="gold" />
+                <Label fx:id="winnerLabel" alignment="CENTER" layoutX="214.0" layoutY="25.0" style="-fx-font-size: 50px; -fx-font-weight: bold;" text="Winner" textFill="gold" />
                 <StackPane layoutX="200.0" layoutY="125.0" prefHeight="150.0" prefWidth="200.0">
                     <children>
                         <MediaView fx:id="mediaView" fitHeight="230.0" fitWidth="360.0" />
