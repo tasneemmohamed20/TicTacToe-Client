@@ -25,26 +25,40 @@ import javafx.util.Duration;
 import theGame.GameBoard;
 import theGame.XO;
 import java.net.URL;
+import javafx.scene.control.ButtonBar;
 
 public class LocalHvsHcontroller implements Initializable {
-    private int scoreX = 0;  
-    private int scoreO = 0;  
 
-    @FXML private Label labelPlayerX;
-    @FXML private Label labelPlayerO;
-    @FXML private Label labelScoreX;
-    @FXML private Label labelScoreO;
-    @FXML private Button cell1;
-    @FXML private Button cell2;
-    @FXML private Button cell3;
-    @FXML private Button cell4;
-    @FXML private Button cell5;
-    @FXML private Button cell6;
-    @FXML private Button cell7;
-    @FXML private Button cell8;
-    @FXML private Button cell9;
+    private int scoreX = 0;
+    private int scoreO = 0;
+
+    @FXML
+    private Label labelPlayerX;
+    @FXML
+    private Label labelPlayerO;
+    @FXML
+    private Label labelScoreX;
+    @FXML
+    private Label labelScoreO;
+    @FXML
+    private Button cell1;
+    @FXML
+    private Button cell2;
+    @FXML
+    private Button cell3;
+    @FXML
+    private Button cell4;
+    @FXML
+    private Button cell5;
+    @FXML
+    private Button cell6;
+    @FXML
+    private Button cell7;
+    @FXML
+    private Button cell8;
+    @FXML
+    private Button cell9;
     private MediaView victoryVideo;
-    
 
     private GameBoard gameBoard;
     private Image xImage;
@@ -68,7 +82,7 @@ public class LocalHvsHcontroller implements Initializable {
         int col = GridPane.getColumnIndex(clickedButton) == null ? 0 : GridPane.getColumnIndex(clickedButton);
 
         if (gameBoard.placeXO(row, col)) {
-            
+
             ImageView imageView = new ImageView(gameBoard.isCross() ? xImage : oImage);
             imageView.setFitHeight(80);
             imageView.setFitWidth(80);
@@ -79,12 +93,13 @@ public class LocalHvsHcontroller implements Initializable {
                 updateScores();
                 if (gameBoard.getWining() == XO.B) {
                     showAlert("Game Over", "Give it another try!", AlertType.INFORMATION);
+
                 } else {
-                    showAlert("Game Over", gameBoard.getWining() + " wins!", AlertType.INFORMATION);
+                    //showAlert("Game Over", gameBoard.getWining() + " wins!", AlertType.INFORMATION);
+                    showVideoAlert(gameBoard.getWining() + " wins!", "/assets/bravo.mp4");
                 }
                 showGameOverAlert();
-                
-                
+
             }
         }
     }
@@ -103,14 +118,14 @@ public class LocalHvsHcontroller implements Initializable {
         alert.setTitle("Game Over");
         alert.setHeaderText(null);
         alert.setContentText("Would you like to play again?");
-        
+
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.setPrefWidth(300);
         dialogPane.setPrefHeight(150);
         dialogPane.setStyle("-fx-background-color: #5A1E76; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
         Label content = (Label) dialogPane.lookup(".content");
         content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
-        
+
         // Customize buttons
 //        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
 //        okButton.setText("Play Again");
@@ -120,11 +135,10 @@ public class LocalHvsHcontroller implements Initializable {
 //        Button cancelButton = (Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL);
 //        cancelButton.setText("Exit");
 //        cancelButton.setStyle("-fx-background-color: #E2BE00; -fx-text-fill: white;");
-
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             resetGame();
-        }else{
+        } else {
             System.exit(0);
         }
     }
@@ -161,7 +175,6 @@ public class LocalHvsHcontroller implements Initializable {
     //         alert.showAndWait();
     //     }
     // }
-
     private void updateScores() {
         if (gameBoard.getWining() == XO.X) {
             scoreX++;
@@ -171,14 +184,13 @@ public class LocalHvsHcontroller implements Initializable {
             labelScoreO.setText(String.valueOf(scoreO));
         }
     }
-    
-    
+
     private void showAlert(String title, String message, AlertType alertType) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        
+
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.setPrefWidth(300);
         dialogPane.setPrefHeight(150);
@@ -187,4 +199,37 @@ public class LocalHvsHcontroller implements Initializable {
         content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
         alert.showAndWait();
     }
+
+    private void showVideoAlert(String title, String videoPath) {
+    try {
+        Alert alert = new Alert(Alert.AlertType.NONE);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+
+        Media media = new Media(getClass().getResource(videoPath).toExternalForm());
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        MediaView mediaView = new MediaView(mediaPlayer);
+       
+        mediaView.setFitWidth(400);
+        mediaView.setFitHeight(400);
+       
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setContent(mediaView);
+       
+        ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        
+        dialogPane.getButtonTypes().add(closeButton);
+
+        mediaPlayer.play();
+
+        alert.setOnHidden(e -> mediaPlayer.stop());
+
+        alert.showAndWait();
+    } catch (Exception e) {
+        e.printStackTrace();
+        showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+    }
+}
+
+
 }
