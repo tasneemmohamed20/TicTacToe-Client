@@ -1,6 +1,7 @@
 package tictactoe;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,6 +19,7 @@ import models.UserModel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 public class LoginController {
     @FXML
@@ -25,7 +27,7 @@ public class LoginController {
     @FXML
     private PasswordField passTF;
     String score;
-
+    Gson gson = new Gson();
     @FXML
     public void handleSignupNavigation(ActionEvent event) {
         navigateToScreen(event, "Signup.fxml", "Signup");
@@ -49,11 +51,15 @@ public class LoginController {
 
             if ("success".equals(response.getStatus())) {
                 showAlert(Alert.AlertType.INFORMATION, "Login Successful", response.getMessage());
-                score = (String)response.getData();
-                System.out.println(score);
+                Type userModelType = new TypeToken<UserModel>() {
+                }.getType();
+                UserModel data = gson.fromJson(gson.toJson(response.getData()), userModelType);
+
+                System.out.println("data" + data.getScore());
                 FXMLLoader loader = navigateToScreen(event, "dashboard.fxml", "Dashboard");
-                 DashboardController dashboardController = loader.getController();
-                dashboardController.setScore(score);
+                DashboardController dashboardController = loader.getController();
+                dashboardController.setScore(data.getScore());
+                 dashboardController.setName(data.getUserName());
             } else {
                 showAlert(Alert.AlertType.ERROR, "Login Failed", response.getMessage());
             }
