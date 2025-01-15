@@ -17,7 +17,10 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -25,6 +28,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
 
@@ -69,7 +74,7 @@ public class DashboardController implements Initializable {
             dos = playerSocket.getDataOutputStream();
             dis = playerSocket.getDataInputStream();
             fetchOnlineUsers(dos, dis);
-            startPeriodicRefresh(dos, dis);
+            refresh(dos, dis);
 
             Platform.runLater(() -> {
                 score.getScene().getWindow().setOnCloseRequest(event -> cleanupResources());
@@ -99,12 +104,12 @@ public class DashboardController implements Initializable {
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    Thread t;
+    boolean running = true;
 
-    private void startPeriodicRefresh(DataOutputStream dos, DataInputStream dis) {
-        refreshTimer = new Timer();
-        refreshTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
+    private void refresh(DataOutputStream dos, DataInputStream dis) {
+        t = new Thread(() -> {
+            while (running) {
                 try {
                     String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
                     dos.writeUTF(jsonRequest);
@@ -116,7 +121,7 @@ public class DashboardController implements Initializable {
                     switch (res.getStatus()) {
                         case "success":
                             List<String> users = (List<String>) res.getData();
-                            
+
                             Platform.runLater(() -> {
                                 displayOnlineUsers(users);
                                 currentName = users.get(users.size() - 1);
@@ -137,16 +142,23 @@ public class DashboardController implements Initializable {
                             System.out.println(res.getMessage());
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
-
+                        case "accept":
+                            Platform.runLater(()->startGame(res));
+                            
                         default:
                             System.out.println("Unknown status: " + res.getStatus());
                             break;
                     }
+                    Thread.sleep(5000);
                 } catch (IOException ex) {
                     Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ex) {
+                    System.out.println("Thread stopped");
                 }
             }
-        }, 0, 5000);
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     public void displayOnlineUsers(List<String> users) {
@@ -156,7 +168,7 @@ public class DashboardController implements Initializable {
                 private final HBox content;
                 private final Label label;
                 private final Button inviteButton;
-                
+
                 {
                     label = new Label();
                     inviteButton = new Button("Invite");
@@ -216,29 +228,73 @@ public class DashboardController implements Initializable {
         }
     }
 
+    void acceptInvite(Object data) {
+        try {
+            RequsetModel requsetModel = new RequsetModel("accept", data);
+
+            String acceptJson = gson.toJson(requsetModel);
+            dos.writeUTF(acceptJson);
+
+        } catch (IOException ex) {
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    void startGame(ResponsModel res) {
+        GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+        System.out.println("start game bettwen " + game.getPlayer1() + " and " + game.getPlayer2());
+        navigateToGame(game);
+    }
+
     void showInviteAlert(String txt, Object data) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
+        Stage currentStage = (Stage) score.getScene().getWindow();
+        alert.initOwner(currentStage);
         alert.showAndWait().ifPresent(click -> {
             if (click == ButtonType.NO) {
                 cancelInvite(data);
+            }
+            if (click == ButtonType.YES) {
+                System.out.println("Accepting invitation with data: " + data);
+                acceptInvite(data);
             }
         });
     }
 
     public void showAlert(String txt) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Stage currentStage = (Stage) score.getScene().getWindow();
+        alert.initOwner(currentStage);
         alert.setHeaderText(txt);
         alert.getButtonTypes().clear();
         alert.getButtonTypes().add(ButtonType.CLOSE);
         alert.showAndWait();
     }
 
+    
+    void navigateToGame(GameModel game)
+    {
+        try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("onlineGame.fxml"));
+        Parent root = loader.load();
+
+        onlineGamecontroller gameController = loader.getController();
+        gameController.startGame(game);
+
+        // Set the new scene
+        Stage stage = (Stage) score.getScene().getWindow();
+        stage.setScene(new Scene(root));
+        stage.setTitle("Game Screen");
+    } catch (IOException ex) {
+        Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    }
     @FXML
     private void cleanupResources() {
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-            System.out.println("Refresh timer stopped.");
-        }
-        System.out.println("Window is closing.");
+       running = false;
+    if (t != null) {
+        t.interrupt();
+    }
+    System.out.println("Thread stopped");
     }
 }
