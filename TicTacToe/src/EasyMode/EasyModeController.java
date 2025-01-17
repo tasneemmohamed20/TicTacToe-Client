@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.ResourceBundle;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import tictactoe.LoginController;
 
 /**
  * FXML Controller class
@@ -123,5 +125,10 @@ public class EasyModeController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
     }
 }

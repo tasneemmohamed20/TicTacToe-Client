@@ -22,6 +22,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.media.MediaView;
 import theGame.GameBoard;
 import theGame.XO;
+import tictactoe.LoginController;
 
 /**
  * FXML Controller class
@@ -204,5 +205,10 @@ public class FXMLController implements Initializable {
         Label content = (Label) dialogPane.lookup(".content");
         content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
         alert.showAndWait();
+    }
+    
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        new LoginController().navigateToScreen(event, "Levels.fxml", "Levels");
     }
 }

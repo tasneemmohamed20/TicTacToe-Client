@@ -12,23 +12,8 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import javafx.scene.media.MediaView?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="785.0" prefWidth="973.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LocalHvsHcontroller">
-   <!-- <left>
-      <MediaView fx:id="mediaView" fitHeight="300.0" fitWidth="400.0" visible="false">
-         <BorderPane.margin>
-            <Insets left="20.0" top="20.0"/>
-         </BorderPane.margin>
-      </MediaView>
-   </left> -->
-   <right>
-      <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game" BorderPane.alignment="CENTER_RIGHT">
-         <BorderPane.margin>
-            <Insets bottom="100.0" right="75.0" top="100.0" />
-         </BorderPane.margin>
-      </Button>
-   </right>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="876.0" prefWidth="970.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LocalHvsHcontroller">
    <center>
       <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="350.0" BorderPane.alignment="CENTER">
          <center>
@@ -120,10 +105,30 @@
                   <Insets left="90.0" />
                </FlowPane.margin>
             </VBox>
+            <FlowPane alignment="BOTTOM_RIGHT" prefHeight="107.0" prefWidth="661.0" />
          </children>
          <BorderPane.margin>
             <Insets top="50.0" />
          </BorderPane.margin>
       </FlowPane>
    </top>
+   <right>
+      <VBox prefHeight="242.0" prefWidth="167.0" BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets bottom="100.0" right="75.0" top="100.0" />
+         </BorderPane.margin>
+         <children>
+            <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game">
+               <VBox.margin>
+                  <Insets bottom="10.0" left="20.0" right="20.0" top="50.0" />
+               </VBox.margin>
+            </Button>
+            <Button fx:id="backButton" mnemonicParsing="false" onAction="#handleBackButton" prefHeight="40.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Back To Menu">
+               <VBox.margin>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+               </VBox.margin>
+            </Button>
+         </children>
+      </VBox>
+   </right>
 </BorderPane>

@@ -8,11 +8,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #3b0152;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.SignupController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="446.0" prefWidth="625.0" style="-fx-background-color: #3b0152;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.SignupController">
    <center>
-      <AnchorPane prefHeight="417.0" prefWidth="622.0" BorderPane.alignment="CENTER">
+      <AnchorPane prefHeight="434.0" prefWidth="625.0" BorderPane.alignment="CENTER">
          <children>
             <AnchorPane layoutX="168.0" layoutY="37.0" prefHeight="341.0" prefWidth="270.0" style="-fx-background-color: #2B0040; -fx-background-radius: 8px;">
                <children>
@@ -25,7 +26,7 @@
                         
                                     <VBox alignment="CENTER" spacing="10.0">
                            <children>
-                              <Button fx:id="signupBTN" onAction="#handleSignup" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Create Account"/>
+                              <Button fx:id="signupBTN" onAction="#handleSignup" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Create Account" />
                               <Button fx:id="loginNav" onAction="#handleLoginNavigation" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: transparent; -fx-text-fill: #ffcc00; -fx-font-size: 14px; -fx-border-color: #ffcc00; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Already have an account" />
                            </children>
                         </VBox>
@@ -41,4 +42,20 @@
          </children>
       </AnchorPane>
    </center>
+   <top>
+      <FlowPane prefHeight="52.0" prefWidth="625.0" BorderPane.alignment="CENTER">
+         <children>
+        <Button mnemonicParsing="false" onAction="#handleBackButton" prefHeight="54.0" prefWidth="65.0" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="20.0" 
+                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+            <graphic>
+                <ImageView fitHeight="40.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@/assets/back-arrow.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+        </Button>
+         </children>
+      </FlowPane>
+   </top>
 </BorderPane>

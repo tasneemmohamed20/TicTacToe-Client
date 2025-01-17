@@ -99,7 +99,7 @@ public class LoginController {
     }
 
 
-    private FXMLLoader navigateToScreen(ActionEvent event, String fxml, String title) {
+    public FXMLLoader navigateToScreen(ActionEvent event, String fxml, String title) {
         FXMLLoader loader = null;
         try {
             loader = new FXMLLoader(getClass().getResource(fxml));
@@ -113,5 +113,10 @@ public class LoginController {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to " + title + " screen.");
         }
         return loader;
+    }
+    
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        navigateToScreen(event, "Menu.fxml", "Menu");
     }
 }
