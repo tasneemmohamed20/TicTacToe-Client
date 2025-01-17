@@ -32,6 +32,12 @@ public class LoginController {
     public void handleSignupNavigation(ActionEvent event) {
         navigateToScreen(event, "Signup.fxml", "Signup");
     }
+    public void handleHardmodeNavigation(ActionEvent event) {
+        navigateToScreen(event, "FXML.fxml", "Hard");
+    }
+    public void handleEasyModeNavigation(ActionEvent event) {
+        navigateToScreen(event, "D:\\java labs\\xoProject\\TicTacToe-Client\\TicTacToe\\src\\EasyMode\\EasyMode.fxml", "Easy Mode");
+    }
    
     @FXML
     public void handleLogin(ActionEvent event) {
