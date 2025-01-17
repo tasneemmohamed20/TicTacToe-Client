@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.stage.Stage;
 
 /**
@@ -24,6 +26,13 @@ import javafx.stage.Stage;
  */
 public class LevelsController implements Initializable {
 
+    @FXML
+    private Button easyBtn;
+    @FXML
+    private Button hardBtn;
+    @FXML
+    private Button backButton;
+
     /**
      * Initializes the controller class.
      */
@@ -32,9 +41,11 @@ public class LevelsController implements Initializable {
         // TODO
     }
 
+    @FXML
     public void handleEasyModeNavigation(ActionEvent event) {
         navigateToScreen(event, "/EasyMode/EasyMode.fxml", "Easy Mode");
     }
+    @FXML
     public void handleHardModeNavigation(ActionEvent event) {
         navigateToScreen(event, "/robot/FXML.fxml", "Hard Mode");
     }
@@ -66,6 +77,11 @@ public class LevelsController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", " Could not navigate to " + title + " screen.\nCheck if the FXML file is in the correct folder.");
         }
         return loader;
+    }
+
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        navigateToScreen(event, "Menu.fxml", "Menu");
     }
     
     

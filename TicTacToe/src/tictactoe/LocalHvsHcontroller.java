@@ -67,6 +67,8 @@ public class LocalHvsHcontroller implements Initializable {
     private Image oImage;
     @FXML
     private Button recordGame;
+    @FXML
+    private Button backButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -257,6 +259,11 @@ public class LocalHvsHcontroller implements Initializable {
             e.printStackTrace();
             showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
         }
+    }
+
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
     }
 
 }

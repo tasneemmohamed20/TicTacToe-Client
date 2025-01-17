@@ -9,31 +9,32 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.DashboardController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="622.0" prefWidth="908.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.DashboardController">
    <right>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #2B0040; -fx-background-radius: 20;" BorderPane.alignment="CENTER">
+      <AnchorPane prefHeight="588.0" prefWidth="305.0" style="-fx-background-color: #2B0040; -fx-background-radius: 20;" BorderPane.alignment="CENTER">
          <children>
-            <Label layoutX="39.0" layoutY="61.0" prefHeight="17.0" prefWidth="120.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 19;" text="Invite Friend" />
-            <ListView fx:id="onlineusers" layoutX="23.0" layoutY="99.0" prefHeight="245.0" prefWidth="161.0" style="-fx-background-color: #2B0040;" />
+            <Label layoutX="22.0" layoutY="30.0" prefHeight="17.0" prefWidth="120.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 19;" text="Invite Friend" />
+            <ListView fx:id="onlineusers" layoutX="21.0" layoutY="67.0" prefHeight="500.0" prefWidth="264.0" style="-fx-background-color: #2B0040;" />
          </children>
          <BorderPane.margin>
             <Insets bottom="14.0" right="50.0" top="20.0" />
          </BorderPane.margin>
       </AnchorPane>
    </right>
-   <center>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+   <left>
+      <AnchorPane prefHeight="622.0" prefWidth="514.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="games" layoutX="37.0" layoutY="110.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="97.0" style="-fx-background-color: white;" text="Load a game" />
-            <Button fx:id="logout" layoutX="35.0" layoutY="173.0" mnemonicParsing="false" prefHeight="38.0" prefWidth="100.0" style="-fx-background-color: #C5A0D7;" text="Logout" />
-            <Label fx:id="score" alignment="CENTER" layoutX="202.0" layoutY="22.0" prefHeight="33.0" prefWidth="103.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 35;" text="0" />
-            <Label alignment="CENTER" layoutX="175.0" layoutY="70.0" prefHeight="27.0" prefWidth="147.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 18;" text="Your total score" />
-            <ImageView fitHeight="150.0" fitWidth="200.0" layoutY="243.0" pickOnBounds="true" preserveRatio="true">
+            <Button fx:id="games" layoutX="37.0" layoutY="170.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="134.0" style="-fx-background-color: white;" text="Load a game" />
+            <Button fx:id="logout" layoutX="35.0" layoutY="229.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="134.0" style="-fx-background-color: #C5A0D7;" text="Logout" />
+            <Label fx:id="score" alignment="CENTER" layoutX="335.0" layoutY="26.0" prefHeight="33.0" prefWidth="103.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 35;" text="0" />
+            <Label alignment="CENTER" layoutX="308.0" layoutY="74.0" prefHeight="27.0" prefWidth="147.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 18;" text="Your total score" />
+            <ImageView fitHeight="260.0" fitWidth="357.0" layoutY="362.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../assets/tic.%20tac.toe..png" />
                </image>
             </ImageView>
+            <Button onAction="#handleBackButton" fx:id="backButton" layoutX="35.0" layoutY="108.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="134.0" text="Back To Menu" />
          </children>
       </AnchorPane>
-   </center>
+   </left>
 </BorderPane>

@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -53,6 +54,8 @@ public class DashboardController implements Initializable {
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
+    @FXML
+    private Button backButton;
 
     public void setScore(String playerscore) {
         userScore = playerscore;
@@ -289,12 +292,16 @@ public class DashboardController implements Initializable {
         Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
     }
     }
-    @FXML
     private void cleanupResources() {
        running = false;
     if (t != null) {
         t.interrupt();
     }
     System.out.println("Thread stopped");
+    }
+
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        //new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
     }
 }

@@ -18,6 +18,17 @@
                 <Image url="/assets/tictactoe.png" />
             </image>
         </ImageView>
+        <Button mnemonicParsing="false" onAction="#handleBackButton" prefHeight="54.0" prefWidth="65.0" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="20.0" 
+                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+            <graphic>
+                <ImageView fitHeight="40.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@/assets/back-arrow.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+        </Button>
+
     </children>
         
     

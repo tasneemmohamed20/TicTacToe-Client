@@ -100,4 +100,9 @@ public class SignupController {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to the login page.");
         }
     }
+    
+    @FXML
+    private void handleBackButton(ActionEvent event) {
+        new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
+    }
 }
