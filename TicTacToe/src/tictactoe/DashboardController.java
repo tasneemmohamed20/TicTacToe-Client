@@ -1,6 +1,7 @@
 package tictactoe;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -33,7 +35,7 @@ import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
 
-public class DashboardController implements Initializable {
+  public class DashboardController implements Initializable {
 
     @FXML
     private Button games;
@@ -53,6 +55,8 @@ public class DashboardController implements Initializable {
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
+    @FXML
+    private Button backButton;
 
     public void setScore(String playerscore) {
         userScore = playerscore;
@@ -142,11 +146,30 @@ public class DashboardController implements Initializable {
                             System.out.println(res.getMessage());
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
-                        case "accept":
-                            Platform.runLater(()->startGame(res));
-                            
+                     case "accept":
+                            Platform.runLater(() -> startGame(gson.fromJson(gson.toJson(res.getData()), GameModel.class)));
+                            break;
+                     case "gameStart":
+                            System.out.println("Raw gameStart response: " + gson.toJson(res));
+                                if (res.getData() == null || !(res.getData() instanceof Map)) {
+                                    Platform.runLater(() -> showAlert("Invalid game data received."));
+                                    break;
+                                }
+                                try {
+                                    GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                                    Platform.runLater(() -> navigateToGame(game));
+                                } catch (JsonSyntaxException e) {
+                                    Platform.runLater(() -> showAlert("Failed to parse game data."));
+                                    e.printStackTrace();
+                                }
+                            break;
+                        case "info":
+                            System.out.println("Info message: " + res.getMessage());
+                            break;
                         default:
                             System.out.println("Unknown status: " + res.getStatus());
+                            System.out.println("Unexpected status: " + res.getStatus());
+                            System.out.println("Response data: " + gson.toJson(res));
                             break;
                     }
                     Thread.sleep(5000);
@@ -227,24 +250,97 @@ public class DashboardController implements Initializable {
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+private boolean validateGameModel(GameModel game) {
+    return game != null &&
+           game.getGameId() != null &&
+           game.getPlayer1() != null &&
+           game.getPlayer1Symbol() != null &&
+           game.getPlayer2() != null &&
+           game.getPlayer2Symbol() != null;
+}
 
-    void acceptInvite(Object data) {
-        try {
-            RequsetModel requsetModel = new RequsetModel("accept", data);
 
-            String acceptJson = gson.toJson(requsetModel);
-            dos.writeUTF(acceptJson);
+private void acceptInvite(Object data) {
+    try {
+        String jsonRequest = gson.toJson(new RequsetModel("accept", data));
+        dos.writeUTF(jsonRequest);
+        dos.flush();
 
-        } catch (IOException ex) {
-            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        String response = dis.readUTF();
+        ResponsModel res = gson.fromJson(response, ResponsModel.class);
+        
+        System.out.println(res.toString());
+
+        switch (res.getStatus()) {
+            case "gameStart":
+                GameModel gameModel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                if (validateGameModel(gameModel)) {
+                    navigateToGame(gameModel);
+                } else {
+                    showAlert("Game start failed: Invalid game data received.");
+                }
+                break;
+              case "success":
+                GameModel gamemodel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                if (validateGameModel(gamemodel)) {
+                    navigateToGame(gamemodel);
+                } else {
+                    showAlert("Game start failed: Invalid game data received.");
+                }
+                break;
+            case "info":
+                System.out.println("Info: " + res.getMessage());
+                break;
+
+            case "error":
+                showAlert("Error: " + res.getMessage());
+                break;
+
+            default:
+                showAlert("Unexpected response: " + res.getStatus());
+                break;
         }
+    } catch (IOException ex) {
+        System.err.println("Error accepting invite: " + ex.getMessage());
+        showAlert("Failed to accept the invite. Please check your connection.");
     }
+}
 
-    void startGame(ResponsModel res) {
-        GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-        System.out.println("start game bettwen " + game.getPlayer1() + " and " + game.getPlayer2());
+
+
+
+    private void startGame(GameModel game) {
+    try {
+        if (!validateGameModel(game)) {
+            throw new IllegalStateException("Invalid game data received.");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "gameStart");
+        response.put("message", "Game started successfully.");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("gameId", game.getGameId());
+        data.put("player1", game.getPlayer1());
+        data.put("player1Symbol", game.getPlayer1Symbol());
+        data.put("player2", game.getPlayer2());
+        data.put("player2Symbol", game.getPlayer2Symbol());
+        data.put("board", new String[9]); 
+        data.put("currentPlayer", game.getPlayer1());
+        data.put("isPlayerTurn", true);
+
+        response.put("data", data);
+
+        System.out.println("Game Start JSON: " + gson.toJson(response));
+
         navigateToGame(game);
+    } catch (IllegalStateException e) {
+        showAlert("Game start failed: " + e.getMessage());
+    } catch (Exception e) {
+        showAlert("An unexpected error occurred: " + e.getMessage());
     }
+}
+
 
     void showInviteAlert(String txt, Object data) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
@@ -272,29 +368,44 @@ public class DashboardController implements Initializable {
     }
 
     
-    void navigateToGame(GameModel game)
-    {
-        try {
+private void navigateToGame(GameModel game) {
+    try {
+        if (!validateGameModel(game)) {
+            showAlert("Invalid game data. Cannot start the game.");
+            return;
+        }
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("onlineGame.fxml"));
         Parent root = loader.load();
 
-        onlineGamecontroller gameController = loader.getController();
-        gameController.startGame(game);
+        onlineGamecontroller controller = loader.getController();
+        controller.startGame(game);
 
-        // Set the new scene
-        Stage stage = (Stage) score.getScene().getWindow();
+        Stage stage = (Stage) onlineusers.getScene().getWindow();
         stage.setScene(new Scene(root));
-        stage.setTitle("Game Screen");
-    } catch (IOException ex) {
-        Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        stage.show();
+    } catch (IOException e) {
+        showAlert("Failed to load the game screen. Please try again.");
     }
-    }
-    @FXML
+}
+
+
+
+
     private void cleanupResources() {
-       running = false;
-    if (t != null) {
+    running = false;
+    if (t != null && t.isAlive()) {
         t.interrupt();
     }
-    System.out.println("Thread stopped");
+    try {
+        if (dos != null) dos.close();
+        if (dis != null) dis.close();
+    } catch (IOException e) {
+        System.err.println("Error closing resources: " + e.getMessage());
     }
+    System.out.println("Resources cleaned up, thread stopped.");
+}
+
+
+    
 }

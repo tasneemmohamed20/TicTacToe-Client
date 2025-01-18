@@ -13,6 +13,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import models.GameModel;
@@ -52,256 +53,232 @@ public class onlineGamecontroller implements Initializable {
     private Button cell8;
     @FXML
     private Button cell9;
+    @FXML
+    private Button recordGame;
 
-    private Socket socket;
-    private DataInputStream dis;
+    private Gson gson = new Gson();
     private DataOutputStream dos;
-    private final Gson gson = new Gson();
+    private DataInputStream dis;
     private String currentPlayer;
-    private String opponent;
-    private int playerXScore = 0;
-    private int playerOScore = 0;
+    private boolean isPlayerTurn = false;
+    private String playerSymbol;
+    private String opponentSymbol;
+    private String gameId;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Perform initialization if necessary
+        try {
+            PlayerSocket playerSocket = PlayerSocket.getInstance();
+            dos = playerSocket.getDataOutputStream();
+            dis = playerSocket.getDataInputStream();
+
+            fetchGameData();
+            startServerListener();
+        } catch (IOException ex) {
+            showError("Connection Error", "Failed to connect to the server.");
+        }
     }
+
+   private void fetchGameData() {
+    try {
+        RequsetModel request = new RequsetModel("initGame", null);
+        dos.writeUTF(gson.toJson(request));
+        dos.flush();
+
+        String response = dis.readUTF();
+        ResponsModel responsModel = gson.fromJson(response, ResponsModel.class);
+
+        if (("gameStart".equals(responsModel.getStatus()) && responsModel.getData() != null) || ("success".equals(responsModel.getStatus()) && responsModel.getData() != null) ) {
+            GameModel gameData = gson.fromJson(gson.toJson(responsModel.getData()), GameModel.class);
+            startGame(gameData);
+        } else if ("error".equals(responsModel.getStatus())) {
+            throw new IllegalStateException(responsModel.getMessage());
+        } else {
+            System.out.println("Unexpected status: " + responsModel.getStatus());
+            throw new IllegalStateException("Unexpected response status: " + responsModel.getStatus());
+        }
+    } catch (Exception ex) {
+        showError("Game Initialization Failed", "Failed to fetch game data: " + ex.getMessage());
+        ex.printStackTrace();
+    }
+}
+
 
     public void startGame(GameModel game) {
-        labelPlayerX.setText(game.getPlayer1());
-        labelPlayerO.setText(game.getPlayer2());
-        currentPlayer = game.getPlayer1();
-        opponent = game.getPlayer2();
-
-        connectToServer();
-        listenToServer();
-    }
-
-    private void connectToServer() {
-        try {
-            socket = new Socket("localhost", 5005);
-            dis = new DataInputStream(socket.getInputStream());
-            dos = new DataOutputStream(socket.getOutputStream());
-            System.out.println("Connected to server.");
-        } catch (IOException ex) {
-            System.err.println("Failed to connect to server. Please check your connection.");
+        if (game == null) {
+            showError("Error", "Game data is null. Cannot start the game.");
+            return;
         }
+
+        this.currentPlayer = game.getCurrentPlayer();
+        this.playerSymbol = game.isPlayerTurn() ? game.getPlayer1Symbol() : game.getPlayer2Symbol();
+        this.opponentSymbol = playerSymbol.equals("X") ? "O" : "X";
+        this.gameId = game.getGameId();
+
+        Platform.runLater(() -> {
+            labelPlayerX.setText(game.getPlayer1());
+            labelPlayerO.setText(game.getPlayer2());
+            labelScoreX.setText("0");
+            labelScoreO.setText("0");
+            resetBoard();
+        });
+
+        isPlayerTurn = game.isPlayerTurn();
+        System.out.println("Game started successfully. Game ID: " + gameId);
     }
 
-    private void listenToServer() {
-        Thread listener = new Thread(() -> {
-            try {
-                while (true) {
-                    String jsonResponse = dis.readUTF();
-                    Platform.runLater(() -> {
-                        try {
-                            ResponsModel response = gson.fromJson(jsonResponse, ResponsModel.class);
-                            handleResponse(response);
-                        } catch (Exception e) {
-                            System.err.println("Malformed response: " + jsonResponse);
-                        }
-                    });
+    private void startServerListener() {
+        Thread listenerThread = new Thread(() -> {
+            while (true) {
+                try {
+                    String response = dis.readUTF();
+                    ResponsModel serverResponse = gson.fromJson(response, ResponsModel.class);
+
+                    Platform.runLater(() -> handleServerResponse(serverResponse));
+                } catch (IOException ex) {
+                    Platform.runLater(() -> showError("Connection Error", "Disconnected from the server."));
+                    break;
                 }
-            } catch (IOException ex) {
-                System.err.println("Server connection lost.");
             }
         });
-        listener.setDaemon(true);
-        listener.start();
+        listenerThread.setDaemon(true);
+        listenerThread.start();
     }
 
-    private void closeConnection() {
-        try {
-            if (dis != null) dis.close();
-            if (dos != null) dos.close();
-            if (socket != null) socket.close();
-            System.out.println("Connection closed.");
-        } catch (IOException ex) {
-            System.err.println("Error closing connection.");
-        }
-    }
-
-    @Override
-    public void finalize() throws Throwable {
-        closeConnection();
-        super.finalize();
-    }
-
-    private void handleResponse(ResponsModel response) {
-        if (response == null || response.getStatus() == null) {
-            System.err.println("Invalid response received.");
+    private void handleServerResponse(ResponsModel response) {
+        if (response == null) {
+            System.out.println("Unknown response received.");
             return;
         }
 
         switch (response.getStatus()) {
             case "move":
-                handleMoveResponse(response);
+                updateBoard((Map<String, String>) response.getData());
                 break;
             case "gameOver":
-                handleGameOverResponse(response);
-                break;
-            case "accept":
-                System.out.println("Game request accepted.");
-                break;
-            case "error":
-                System.err.println("Error received: " + response.getMessage());
+                handleGameOver(response.getMessage());
                 break;
             default:
-                System.err.println("Unknown response status: " + response.getStatus());
+                System.out.println("Unknown response: " + response.getStatus());
+                break;
         }
     }
 
-    private void handleMoveResponse(ResponsModel response) {
-        try {
-            Object rawData = response.getData();
-            if (rawData instanceof Map<?, ?>) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> moveData = (Map<String, String>) rawData;
+    private void updateBoard(Map<String, String> moveData) {
+        if (moveData == null || !moveData.containsKey("cell") || !moveData.containsKey("symbol")) {
+            System.out.println("Invalid move data received.");
+            return;
+        }
 
-                String player = moveData.get("player");
-                int cellNumber = Integer.parseInt(moveData.get("cellNumber"));
+        String cellId = moveData.get("cell");
+        String symbol = moveData.get("symbol");
 
-                if (!player.equals(currentPlayer)) {
-                    handleOpponentMove(cellNumber);
-                }
-            } else {
-                System.err.println("Invalid move data type.");
-            }
-        } catch (Exception e) {
-            System.err.println("Error processing move response: " + e.getMessage());
+        Button targetCell = getCellById(cellId);
+        if (targetCell != null) {
+            targetCell.setText(symbol);
+            targetCell.setDisable(true);
+        }
+
+        isPlayerTurn = !symbol.equals(playerSymbol);
+    }
+
+    private Button getCellById(String cellId) {
+        switch (cellId) {
+            case "cell1":
+                return cell1;
+            case "cell2":
+                return cell2;
+            case "cell3":
+                return cell3;
+            case "cell4":
+                return cell4;
+            case "cell5":
+                return cell5;
+            case "cell6":
+                return cell6;
+            case "cell7":
+                return cell7;
+            case "cell8":
+                return cell8;
+            case "cell9":
+                return cell9;
+            default:
+                return null;
         }
     }
 
-    private void handleOpponentMove(int cellNumber) {
+    private void handleGameOver(String resultMessage) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Game Over");
+        alert.setHeaderText(resultMessage);
+        alert.showAndWait();
+        resetBoard();
+    }
+
+    private void resetBoard() {
         Platform.runLater(() -> {
-            Button targetCell = getCellByNumber(cellNumber);
-            if (targetCell != null && targetCell.getText().isEmpty()) {
-                targetCell.setText(opponent);
-                targetCell.setDisable(true);
-
-                if (checkGameOver(opponent)) {
-                    System.out.println("Opponent wins!");
-                    disableAllCells();
-                }
-            }
-        });
-    }
-
-    private void handleGameOverResponse(ResponsModel response) {
-        Platform.runLater(() -> {
-            try {
-                @SuppressWarnings("unchecked")
-                Map<String, String> data = gson.fromJson(response.getData().toString(), Map.class);
-                String winner = data.get("winner");
-
-                if (winner.equals(labelPlayerX.getText())) {
-                    System.out.println("Player X wins!");
-                    labelScoreX.setText(String.valueOf(++playerXScore));
-                } else if (winner.equals(labelPlayerO.getText())) {
-                    System.out.println("Player O wins!");
-                    labelScoreO.setText(String.valueOf(++playerOScore));
-                } else {
-                    System.out.println("It's a draw!");
-                }
-                disableAllCells();
-            } catch (Exception e) {
-                System.err.println("Error processing game over response: " + e.getMessage());
-            }
-        });
-    }
-
-    private Button getCellByNumber(int number) {
-        switch (number) {
-            case 1: return cell1;
-            case 2: return cell2;
-            case 3: return cell3;
-            case 4: return cell4;
-            case 5: return cell5;
-            case 6: return cell6;
-            case 7: return cell7;
-            case 8: return cell8;
-            case 9: return cell9;
-            default: return null;
-        }
-    }
-
-    private boolean checkGameOver(String symbol) {
-        int[][] winCombos = {
-            {1, 2, 3}, {4, 5, 6}, {7, 8, 9},
-            {1, 4, 7}, {2, 5, 8}, {3, 6, 9},
-            {1, 5, 9}, {3, 5, 7}
-        };
-
-        for (int[] combo : winCombos) {
-            if (getCellByNumber(combo[0]).getText().equals(symbol) &&
-                getCellByNumber(combo[1]).getText().equals(symbol) &&
-                getCellByNumber(combo[2]).getText().equals(symbol)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void disableAllCells() {
-        Platform.runLater(() -> {
-            cell1.setDisable(true);
-            cell2.setDisable(true);
-            cell3.setDisable(true);
-            cell4.setDisable(true);
-            cell5.setDisable(true);
-            cell6.setDisable(true);
-            cell7.setDisable(true);
-            cell8.setDisable(true);
-            cell9.setDisable(true);
+            cell1.setText("");
+            cell1.setDisable(false);
+            cell2.setText("");
+            cell2.setDisable(false);
+            cell3.setText("");
+            cell3.setDisable(false);
+            cell4.setText("");
+            cell4.setDisable(false);
+            cell5.setText("");
+            cell5.setDisable(false);
+            cell6.setText("");
+            cell6.setDisable(false);
+            cell7.setText("");
+            cell7.setDisable(false);
+            cell8.setText("");
+            cell8.setDisable(false);
+            cell9.setText("");
+            cell9.setDisable(false);
         });
     }
 
     @FXML
     private void handleCellAction(ActionEvent event) {
+        if (!isPlayerTurn) {
+            showError("Invalid Move", "It's not your turn!");
+            return;
+        }
+
         Button clickedButton = (Button) event.getSource();
-        if (clickedButton.getText().isEmpty()) {
-            clickedButton.setText(currentPlayer);
-            int cellNumber = getCellNumber(clickedButton);
-            sendMoveToServer(cellNumber);
+        if (!clickedButton.getText().isEmpty()) {
+            showError("Invalid Move", "Cell is already occupied!");
+            return;
         }
+
+        String cellId = clickedButton.getId();
+        clickedButton.setText(playerSymbol);
+        clickedButton.setDisable(true);
+
+        sendMove(cellId);
     }
 
-    private int getCellNumber(Button cell) {
-        if (cell == cell1) return 1;
-        if (cell == cell2) return 2;
-        if (cell == cell3) return 3;
-        if (cell == cell4) return 4;
-        if (cell == cell5) return 5;
-        if (cell == cell6) return 6;
-        if (cell == cell7) return 7;
-        if (cell == cell8) return 8;
-        if (cell == cell9) return 9;
-        return -1;
-    }
-
-   private void sendMoveToServer(int cellNumber) {
-    try {
-        if (cellNumber != -1 && currentPlayer != null && !currentPlayer.isEmpty()) {
+    private void sendMove(String cellId) {
+        try {
             Map<String, String> moveData = new HashMap<>();
-            moveData.put("player", currentPlayer);
-            moveData.put("cell", String.valueOf(cellNumber));
+            moveData.put("gameId", gameId);
+            moveData.put("cell", cellId);
+            moveData.put("symbol", playerSymbol);
 
-            Map<String, Object> request = new HashMap<>();
-            request.put("action", "move");
-            request.put("data", moveData);
-
-            String jsonRequest = gson.toJson(request);
-            System.out.println("Sending to server: " + jsonRequest);
-
-            dos.writeUTF(jsonRequest);
+            RequsetModel moveRequest = new RequsetModel("move", moveData);
+            dos.writeUTF(gson.toJson(moveRequest));
             dos.flush();
-        } else {
-            System.err.println("Invalid move data: currentPlayer is null/empty or cellNumber is invalid.");
+
+            isPlayerTurn = false;
+        } catch (IOException ex) {
+            showError("Error", "Failed to send move to the server.");
         }
-    } catch (IOException ex) {
-        System.err.println("Failed to send move to server: " + ex.getMessage());
     }
-}
 
-
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(message);
+        alert.showAndWait();
+    }
 }
