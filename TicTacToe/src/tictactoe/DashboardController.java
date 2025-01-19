@@ -55,9 +55,6 @@ import models.ResponsModel;
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
-    @FXML
-    private Button backButton;
-
     public void setScore(String playerscore) {
         userScore = playerscore;
         if (userScore != null) {
@@ -134,6 +131,7 @@ import models.ResponsModel;
 
                         case "invitation":
                             System.out.println("Invitation received: " + res.getMessage());
+                            System.out.println("Invitation received: " + res.getData());
                             Platform.runLater(() -> showInviteAlert(res.getMessage(), res.getData()));
                             break;
 
@@ -150,11 +148,6 @@ import models.ResponsModel;
                             Platform.runLater(() -> startGame(gson.fromJson(gson.toJson(res.getData()), GameModel.class)));
                             break;
                      case "gameStart":
-                            System.out.println("Raw gameStart response: " + gson.toJson(res));
-                                if (res.getData() == null || !(res.getData() instanceof Map)) {
-                                    Platform.runLater(() -> showAlert("Invalid game data received."));
-                                    break;
-                                }
                                 try {
                                     GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
                                     Platform.runLater(() -> navigateToGame(game));
@@ -168,8 +161,6 @@ import models.ResponsModel;
                             break;
                         default:
                             System.out.println("Unknown status: " + res.getStatus());
-                            System.out.println("Unexpected status: " + res.getStatus());
-                            System.out.println("Response data: " + gson.toJson(res));
                             break;
                     }
                     Thread.sleep(5000);
@@ -251,12 +242,14 @@ import models.ResponsModel;
         }
     }
 private boolean validateGameModel(GameModel game) {
+    System.out.println("!!!!!!"+game.toString());
     return game != null &&
            game.getGameId() != null &&
            game.getPlayer1() != null &&
            game.getPlayer1Symbol() != null &&
            game.getPlayer2() != null &&
            game.getPlayer2Symbol() != null;
+    
 }
 
 
@@ -268,46 +261,31 @@ private void acceptInvite(Object data) {
 
         String response = dis.readUTF();
         ResponsModel res = gson.fromJson(response, ResponsModel.class);
-        
-        System.out.println(res.toString());
-
-        switch (res.getStatus()) {
-            case "gameStart":
-                GameModel gameModel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-                if (validateGameModel(gameModel)) {
-                    navigateToGame(gameModel);
-                } else {
-                    showAlert("Game start failed: Invalid game data received.");
-                }
-                break;
-              case "success":
-                GameModel gamemodel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-                if (validateGameModel(gamemodel)) {
-                    navigateToGame(gamemodel);
-                } else {
-                    showAlert("Game start failed: Invalid game data received.");
-                }
-                break;
-            case "info":
-                System.out.println("Info: " + res.getMessage());
-                break;
-
-            case "error":
-                showAlert("Error: " + res.getMessage());
-                break;
-
-            default:
-                showAlert("Unexpected response: " + res.getStatus());
-                break;
+         System.out.println(res.toString());
+        if ("success".equals(res.getStatus())) {
+            GameModel gameModel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+            GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+        if (gameData == null || gameData.getGameId() == null || gameData.getBoard() == null) {
+            showError("Error", "Invalid game data received from the server.");
+            return;
+        }
+            System.out.println("!!!!!!!!!!!!!!game model in accept before validation:"+gameModel.toString());
+            if (validateGameModel(gameModel)) {
+                System.out.println("!!!!!!!!!!!!!!game model in accept after validation:"+gameModel.toString());
+                navigateToGame(gameModel);
+            } else {
+                showAlert("Game start failed: Invalid game data received.");
+            }
+        } else if ("error".equals(res.getStatus())) {
+            showAlert("Error: " + res.getMessage());
+        } else {
+            showAlert("Unexpected response: " + res.getStatus());
         }
     } catch (IOException ex) {
         System.err.println("Error accepting invite: " + ex.getMessage());
         showAlert("Failed to accept the invite. Please check your connection.");
     }
 }
-
-
-
 
     private void startGame(GameModel game) {
     try {
@@ -356,6 +334,13 @@ private void acceptInvite(Object data) {
             }
         });
     }
+private void showError(String title, String message) {
+    Alert alert = new Alert(Alert.AlertType.ERROR);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
+    alert.showAndWait();
+}
 
     public void showAlert(String txt) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -367,30 +352,30 @@ private void acceptInvite(Object data) {
         alert.showAndWait();
     }
 
-    
-private void navigateToGame(GameModel game) {
+    private void navigateToGame(GameModel game) {
+        System.out.println("SHAKL ELGAMEE F ELNAVIGATE"+game.toString());
     try {
         if (!validateGameModel(game)) {
             showAlert("Invalid game data. Cannot start the game.");
             return;
         }
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("onlineGame.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/onlineGame.fxml"));
         Parent root = loader.load();
 
         onlineGamecontroller controller = loader.getController();
+
         controller.startGame(game);
 
         Stage stage = (Stage) onlineusers.getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();
     } catch (IOException e) {
+        System.out.println(game.toString());
+        System.out.println(e.toString());
         showAlert("Failed to load the game screen. Please try again.");
     }
 }
-
-
-
 
     private void cleanupResources() {
     running = false;

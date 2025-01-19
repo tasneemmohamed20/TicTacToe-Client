@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +18,6 @@ import javafx.scene.control.Label;
 import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
-
 /**
  * FXML Controller class
  *
@@ -53,10 +51,8 @@ public class onlineGamecontroller implements Initializable {
     private Button cell8;
     @FXML
     private Button cell9;
-    @FXML
-    private Button recordGame;
 
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
     private DataOutputStream dos;
     private DataInputStream dis;
     private String currentPlayer;
@@ -64,6 +60,8 @@ public class onlineGamecontroller implements Initializable {
     private String playerSymbol;
     private String opponentSymbol;
     private String gameId;
+    @FXML
+    private Button recordGame;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -79,75 +77,96 @@ public class onlineGamecontroller implements Initializable {
         }
     }
 
-   private void fetchGameData() {
-    try {
-        RequsetModel request = new RequsetModel("initGame", null);
-        dos.writeUTF(gson.toJson(request));
-        dos.flush();
+    private void fetchGameData() {
+        try {
+            RequsetModel request = new RequsetModel("gameStart", null);
+            
+            System.out.println("!!!!!!!!!!!!!!"+request.toString());
+            
+            dos.writeUTF(gson.toJson(request));
+            dos.flush();
+            System.out.println("[DEBUG] Game initialization request sent.");
 
-        String response = dis.readUTF();
-        ResponsModel responsModel = gson.fromJson(response, ResponsModel.class);
-
-        if (("gameStart".equals(responsModel.getStatus()) && responsModel.getData() != null) || ("success".equals(responsModel.getStatus()) && responsModel.getData() != null) ) {
-            GameModel gameData = gson.fromJson(gson.toJson(responsModel.getData()), GameModel.class);
-            startGame(gameData);
-        } else if ("error".equals(responsModel.getStatus())) {
-            throw new IllegalStateException(responsModel.getMessage());
-        } else {
-            System.out.println("Unexpected status: " + responsModel.getStatus());
-            throw new IllegalStateException("Unexpected response status: " + responsModel.getStatus());
+            String response = dis.readUTF();
+            ResponsModel responsModel = gson.fromJson(response, ResponsModel.class);
+            System.out.println("[DEBUG] Received response: " + response);
+            
+            System.out.println("REEEEEEEESponseModel"+responsModel.toString());
+            
+            switch (responsModel.getStatus()) {
+                case "gameStart":
+                    GameModel gameData = gson.fromJson(gson.toJson(responsModel.getData()), GameModel.class);
+                    startGame(gameData);
+                    break;
+                case "error":
+                    showError("Initialization Error", responsModel.getMessage());
+                    break;
+                default:
+                    showError("Initialization Error", "Unexpected response: " + responsModel.getStatus());
+            }
+        } catch (IOException ex) {
+            showError("Connection Error", "Failed to communicate with the server: " + ex.getMessage());
         }
-    } catch (Exception ex) {
-        showError("Game Initialization Failed", "Failed to fetch game data: " + ex.getMessage());
-        ex.printStackTrace();
     }
-}
-
 
     public void startGame(GameModel game) {
+        System.out.println("!!!!!!!!!!!!!!"+game.toString());
         if (game == null) {
-            showError("Error", "Game data is null. Cannot start the game.");
+            showError("Error", "Game data is null.");
             return;
         }
 
-        this.currentPlayer = game.getCurrentPlayer();
-        this.playerSymbol = game.isPlayerTurn() ? game.getPlayer1Symbol() : game.getPlayer2Symbol();
-        this.opponentSymbol = playerSymbol.equals("X") ? "O" : "X";
         this.gameId = game.getGameId();
+        this.currentPlayer = game.getCurrentPlayer();
+        this.isPlayerTurn = game.isPlayerTurn();
+        this.playerSymbol = game.getPlayer1Symbol();
+        this.opponentSymbol = game.getPlayer2Symbol();
 
-        Platform.runLater(() -> {
-            labelPlayerX.setText(game.getPlayer1());
-            labelPlayerO.setText(game.getPlayer2());
-            labelScoreX.setText("0");
-            labelScoreO.setText("0");
-            resetBoard();
-        });
+        initializeGameUI(game);
+    }
 
-        isPlayerTurn = game.isPlayerTurn();
-        System.out.println("Game started successfully. Game ID: " + gameId);
+    private void initializeGameUI(GameModel game) {
+        labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
+        labelPlayerO.setText(game.getPlayer2() + " (" + game.getPlayer2Symbol() + ")");
+        labelScoreX.setText("0");
+        labelScoreO.setText("0");
+
+        resetBoard();
+
+        String[] board = game.getBoard();
+        for (int i = 0; i < board.length; i++) {
+            String cellId = "cell" + (i + 1);
+            Button cell = getCellById(cellId);
+            if (cell != null) {
+                cell.setText(board[i] == null ? "" : board[i]);
+                cell.setDisable(board[i] != null);
+            }
+        }
     }
 
     private void startServerListener() {
         Thread listenerThread = new Thread(() -> {
-            while (true) {
-                try {
+            try {
+                while (true) {
                     String response = dis.readUTF();
+                    System.out.println("[DEBUG] Received server response: " + response);
                     ResponsModel serverResponse = gson.fromJson(response, ResponsModel.class);
 
                     Platform.runLater(() -> handleServerResponse(serverResponse));
-                } catch (IOException ex) {
-                    Platform.runLater(() -> showError("Connection Error", "Disconnected from the server."));
-                    break;
                 }
+            } catch (IOException ex) {
+                System.err.println("[ERROR] Disconnected from server: " + ex.getMessage());
+                Platform.runLater(() -> showError("Connection Error", "Disconnected from the server."));
             }
         });
+
         listenerThread.setDaemon(true);
         listenerThread.start();
     }
 
     private void handleServerResponse(ResponsModel response) {
         if (response == null) {
-            System.out.println("Unknown response received.");
+            System.out.println("Received an empty or null response.");
             return;
         }
 
@@ -158,15 +177,19 @@ public class onlineGamecontroller implements Initializable {
             case "gameOver":
                 handleGameOver(response.getMessage());
                 break;
-            default:
-                System.out.println("Unknown response: " + response.getStatus());
+            case "info":
+                System.out.println("Info message: " + response.getMessage());
                 break;
+            case "error":
+                showError("Server Error", response.getMessage());
+                break;
+            default:
+                System.out.println("Unknown status: " + response.getStatus());
         }
     }
 
     private void updateBoard(Map<String, String> moveData) {
         if (moveData == null || !moveData.containsKey("cell") || !moveData.containsKey("symbol")) {
-            System.out.println("Invalid move data received.");
             return;
         }
 
@@ -184,26 +207,16 @@ public class onlineGamecontroller implements Initializable {
 
     private Button getCellById(String cellId) {
         switch (cellId) {
-            case "cell1":
-                return cell1;
-            case "cell2":
-                return cell2;
-            case "cell3":
-                return cell3;
-            case "cell4":
-                return cell4;
-            case "cell5":
-                return cell5;
-            case "cell6":
-                return cell6;
-            case "cell7":
-                return cell7;
-            case "cell8":
-                return cell8;
-            case "cell9":
-                return cell9;
-            default:
-                return null;
+            case "cell1": return cell1;
+            case "cell2": return cell2;
+            case "cell3": return cell3;
+            case "cell4": return cell4;
+            case "cell5": return cell5;
+            case "cell6": return cell6;
+            case "cell7": return cell7;
+            case "cell8": return cell8;
+            case "cell9": return cell9;
+            default: return null;
         }
     }
 
@@ -217,62 +230,16 @@ public class onlineGamecontroller implements Initializable {
 
     private void resetBoard() {
         Platform.runLater(() -> {
-            cell1.setText("");
-            cell1.setDisable(false);
-            cell2.setText("");
-            cell2.setDisable(false);
-            cell3.setText("");
-            cell3.setDisable(false);
-            cell4.setText("");
-            cell4.setDisable(false);
-            cell5.setText("");
-            cell5.setDisable(false);
-            cell6.setText("");
-            cell6.setDisable(false);
-            cell7.setText("");
-            cell7.setDisable(false);
-            cell8.setText("");
-            cell8.setDisable(false);
-            cell9.setText("");
-            cell9.setDisable(false);
+            cell1.setText(""); cell1.setDisable(false);
+            cell2.setText(""); cell2.setDisable(false);
+            cell3.setText(""); cell3.setDisable(false);
+            cell4.setText(""); cell4.setDisable(false);
+            cell5.setText(""); cell5.setDisable(false);
+            cell6.setText(""); cell6.setDisable(false);
+            cell7.setText(""); cell7.setDisable(false);
+            cell8.setText(""); cell8.setDisable(false);
+            cell9.setText(""); cell9.setDisable(false);
         });
-    }
-
-    @FXML
-    private void handleCellAction(ActionEvent event) {
-        if (!isPlayerTurn) {
-            showError("Invalid Move", "It's not your turn!");
-            return;
-        }
-
-        Button clickedButton = (Button) event.getSource();
-        if (!clickedButton.getText().isEmpty()) {
-            showError("Invalid Move", "Cell is already occupied!");
-            return;
-        }
-
-        String cellId = clickedButton.getId();
-        clickedButton.setText(playerSymbol);
-        clickedButton.setDisable(true);
-
-        sendMove(cellId);
-    }
-
-    private void sendMove(String cellId) {
-        try {
-            Map<String, String> moveData = new HashMap<>();
-            moveData.put("gameId", gameId);
-            moveData.put("cell", cellId);
-            moveData.put("symbol", playerSymbol);
-
-            RequsetModel moveRequest = new RequsetModel("move", moveData);
-            dos.writeUTF(gson.toJson(moveRequest));
-            dos.flush();
-
-            isPlayerTurn = false;
-        } catch (IOException ex) {
-            showError("Error", "Failed to send move to the server.");
-        }
     }
 
     private void showError(String title, String message) {
@@ -280,5 +247,41 @@ public class onlineGamecontroller implements Initializable {
         alert.setTitle(title);
         alert.setHeaderText(message);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleCellAction(ActionEvent event) {
+        if (!isPlayerTurn) {
+        showError("Invalid Move", "It's not your turn!");
+        return;
+    }
+
+    Button clickedCell = (Button) event.getSource();
+
+    if (!clickedCell.getText().isEmpty()) {
+        showError("Invalid Move", "This cell is already occupied!");
+        return;
+    }
+
+    String cellId = clickedCell.getId();
+
+    clickedCell.setText(playerSymbol);
+    clickedCell.setDisable(true);
+
+    try {
+        Map<String, String> moveData = new HashMap<>();
+        moveData.put("cell", cellId);
+        moveData.put("symbol", playerSymbol);
+
+        RequsetModel request = new RequsetModel("makeMove", moveData);
+        dos.writeUTF(gson.toJson(request));
+        dos.flush();
+        System.out.println("[DEBUG] Move sent to server: " + moveData);
+
+        isPlayerTurn = false;
+
+    } catch (IOException ex) {
+        showError("Connection Error", "Failed to send the move to the server: " + ex.getMessage());
+    }
     }
 }
