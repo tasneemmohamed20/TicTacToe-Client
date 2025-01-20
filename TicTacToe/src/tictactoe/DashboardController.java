@@ -119,7 +119,7 @@ import models.ResponsModel;
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
-                    System.err.println();
+                    System.err.println("!!!!!!!!!!! response of refresh"+res.toString());
                     switch (res.getStatus()) {
                         case "success":
                             List<String> users = (List<String>) res.getData();
@@ -149,21 +149,14 @@ import models.ResponsModel;
                             Platform.runLater(() -> startGame(gson.fromJson(gson.toJson(res.getData()), GameModel.class)));
                             break;
                      case "gameStart":
-                                try {
-                                    // JsonElement jsonElement = gson.toJsonTree(res.getData());
-                                    GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-                                    if (gameData == null) {
-                                        showError("Data Error", "Could not parse game data");
-                                        return;
-                                    }
-                                    startGame(gameData);
-                                } catch (JsonSyntaxException e) {
-                                    Platform.runLater(() -> showAlert("Failed to parse game data."));
-                                    e.printStackTrace();
-                                }
-                            break;
+                                GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                                Platform.runLater(() -> startGame(gameData));
+                                break;
                         case "info":
                             System.out.println("Info message: " + res.getMessage());
+                            break;
+                         case "notAllowed":
+                            Platform.runLater(() -> showAlert("You are not allowed to play. Please wait or check eligibility."));
                             break;
                         default:
                             System.out.println("Unknown status: " + res.getStatus());
@@ -266,37 +259,6 @@ private void acceptInvite(Object data) {
         dos.writeUTF(jsonRequest);
         dos.flush();
 
-        // String response = dis.readUTF();
-        // ResponsModel res = gson.fromJson(response, ResponsModel.class);
-        //  System.out.println(res.toString());
-
-        // if ("gameStart".equals(res.getStatus())) {
-        //     // Get the raw JSON data
-        //     JsonElement jsonElement = gson.toJsonTree(res.getData());
-        //     System.err.println(jsonElement);
-        //     GameModel gameModel = gson.fromJson(jsonElement, GameModel.class);
-        //     // GameModel gameModel;
-        //     // if (jsonElement.isJsonArray()) {
-        //         // If it's an array, get the first element
-        //         // gameModel = gson.fromJson(jsonElement.getAsJsonArray().get(0), GameModel.class);
-        //     // } else {
-        //         // If it's an object, parse directly
-        //         // gameModel = gson.fromJson(jsonElement, GameModel.class);
-        //     // }
-
-        //     if (gameModel == null || !validateGameModel(gameModel)) {
-        //         showError("Error", "Invalid game data received from the server.");
-        //         return;
-        //     }
-
-        //     System.out.println("Game model validated: " + gameModel.toString());
-        //     navigateToGame(gameModel);
-
-        // }else if ("error".equals(res.getStatus())) {
-        //     showAlert("Error: " + res.getMessage());
-        // } else {
-        //     showAlert("Unexpected response: " + res.getStatus());
-        // }
     } catch (IOException ex) {
         System.err.println("Error accepting invite: " + ex.getMessage());
         showAlert("Failed to accept the invite. Please check your connection.");
@@ -369,15 +331,6 @@ private void startGame(GameModel game) {
         });
     }
 
-    // public void showAlert(String txt) {
-    //     Alert alert = new Alert(Alert.AlertType.INFORMATION);
-    //     Stage currentStage = (Stage) score.getScene().getWindow();
-    //     alert.initOwner(currentStage);
-    //     alert.setHeaderText(txt);
-    //     alert.getButtonTypes().clear();
-    //     alert.getButtonTypes().add(ButtonType.CLOSE);
-    //     alert.showAndWait();
-    // }
     private void showAlert(String txt) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -408,7 +361,7 @@ private void startGame(GameModel game) {
                 showAlert("Controller is null!!");
                 return;
             }
-            controller.initializeGame(game);
+            controller.initializeGameUI(game);
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
             stage.setScene(new Scene(root));
