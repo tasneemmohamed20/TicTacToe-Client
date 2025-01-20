@@ -57,4 +57,10 @@ public class GameModel extends Thread{
     {
         
     }
+
+    @Override
+    public String toString() {
+        return "GameModel{" + "player1=" + player1 + ", player2=" + player2 + ", scorePlayer1=" + scorePlayer1 + ", scorePlayer2=" + scorePlayer2 + '}';
+    }
+    
 }
