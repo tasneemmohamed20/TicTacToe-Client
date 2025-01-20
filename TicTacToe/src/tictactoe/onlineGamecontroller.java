@@ -1,6 +1,7 @@
 package tictactoe;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -63,6 +64,8 @@ public class onlineGamecontroller implements Initializable {
     @FXML
     private Button recordGame;
 
+    private GameModel gameData;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         try {
@@ -70,47 +73,50 @@ public class onlineGamecontroller implements Initializable {
             dos = playerSocket.getDataOutputStream();
             dis = playerSocket.getDataInputStream();
 
-            fetchGameData();
+            if (gameData != null) {
+                startGame(gameData); //1
+            }
             startServerListener();
         } catch (IOException ex) {
             showError("Connection Error", "Failed to connect to the server.");
         }
     }
-
-    private void fetchGameData() {
-        try {
-            RequsetModel request = new RequsetModel("gameStart", null);
-            
-            System.out.println("!!!!!!!!!!!!!!"+request.toString());
-            
-            dos.writeUTF(gson.toJson(request));
-            dos.flush();
-            System.out.println("[DEBUG] Game initialization request sent.");
-
-            String response = dis.readUTF();
-            ResponsModel responsModel = gson.fromJson(response, ResponsModel.class);
-            System.out.println("[DEBUG] Received response: " + response);
-            
-            System.out.println("REEEEEEEESponseModel"+responsModel.toString());
-            
-            switch (responsModel.getStatus()) {
-                case "gameStart":
-                    GameModel gameData = gson.fromJson(gson.toJson(responsModel.getData()), GameModel.class);
-                    startGame(gameData);
-                    break;
-                case "error":
-                    showError("Initialization Error", responsModel.getMessage());
-                    break;
-                default:
-                    showError("Initialization Error", "Unexpected response: " + responsModel.getStatus());
-            }
-        } catch (IOException ex) {
-            showError("Connection Error", "Failed to communicate with the server: " + ex.getMessage());
+    public void initializeGame(GameModel game) {
+        if (game == null) {
+            throw new IllegalArgumentException("Game data cannot be null");
         }
+        this.gameData = game;
     }
 
+    // private void fetchGameData() {
+    //     try {
+    //         RequsetModel request = new RequsetModel("gameStart", null);
+    //         System.out.println("!!!!!!!!!!!!!!"+request.toString());
+    //         dos.writeUTF(gson.toJson(request));
+    //         dos.flush();
+    //         System.out.println("[DEBUG] Game initialization request sent.");
+    //         String response = dis.readUTF();
+    //         ResponsModel responsModel = gson.fromJson(response, ResponsModel.class);
+    //         System.out.println("[DEBUG] Received response: " + response);
+    //         System.err.println("ResponseModel"+responsModel.toString());
+    //         switch (responsModel.getStatus()) {
+    //             case "gameStart":
+    //                 GameModel gameData = gson.fromJson(gson.toJson(responsModel.getData()), GameModel.class);
+    //                 startGame(gameData);
+    //                 break;
+    //             case "error":
+    //                 showError("Initialization Error", responsModel.getMessage());
+    //                 break;
+    //             default:
+    //                 showError("Initialization Error", "Unexpected response: " + responsModel.getStatus());
+    //         }
+    //     } catch (IOException ex) {
+    //         showError("Connection Error", "Failed to communicate with the server: " + ex.getMessage());
+    //     }
+    // }
+
     public void startGame(GameModel game) {
-        System.out.println("!!!!!!!!!!!!!!"+game.toString());
+        System.out.println("!!!!!!!!!!!!!!"+game.toString()); // 9
         if (game == null) {
             showError("Error", "Game data is null.");
             return;
@@ -149,17 +155,26 @@ public class onlineGamecontroller implements Initializable {
             try {
                 while (true) {
                     String response = dis.readUTF();
-                    System.out.println("[DEBUG] Received server response: " + response);
-                    ResponsModel serverResponse = gson.fromJson(response, ResponsModel.class);
-
-                    Platform.runLater(() -> handleServerResponse(serverResponse));
+                    System.out.println("[DEBUG] Received raw server response: " + response); //2 //4 //6
+                    try {
+                        ResponsModel serverResponse = gson.fromJson(response, ResponsModel.class);
+                        System.out.println("[DEBUG] Parsed server response: " + serverResponse); //3  //5 //7
+                        if (serverResponse != null) {
+                            Platform.runLater(() -> handleServerResponse(serverResponse));
+                        }
+                    } catch (JsonSyntaxException e) {
+                        System.err.println("[ERROR] Invalid JSON response: " + response);
+                        System.err.println("[ERROR] Exception: " + e.getMessage());
+                        Platform.runLater(() -> showError("Server Error", "Received invalid response from server"));
+                        System.err.println("invalid: " + response.toString());
+                    }
                 }
             } catch (IOException ex) {
                 System.err.println("[ERROR] Disconnected from server: " + ex.getMessage());
                 Platform.runLater(() -> showError("Connection Error", "Disconnected from the server."));
             }
         });
-
+    
         listenerThread.setDaemon(true);
         listenerThread.start();
     }
@@ -170,9 +185,22 @@ public class onlineGamecontroller implements Initializable {
             return;
         }
 
+        System.err.println("[DEBUG] Handling server response: " + response.getData()); // 8 with data // 10 with null data
         switch (response.getStatus()) {
             case "move":
-                updateBoard((Map<String, String>) response.getData());
+                if (response.getData() != null) {
+                    updateBoard((Map<String, String>) response.getData());
+                } else {
+                    showError("Data Error", "Move data is missing.");
+                }
+                break;
+            case "gameStart":
+                if (response.getData() != null) {
+                    GameModel gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
+                    startGame(gameData);
+                } else {
+                    showError("Data Error", "Game data is missing.");
+                }
                 break;
             case "gameOver":
                 handleGameOver(response.getMessage());

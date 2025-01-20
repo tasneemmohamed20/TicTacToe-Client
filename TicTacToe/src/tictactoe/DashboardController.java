@@ -1,6 +1,7 @@
 package tictactoe;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -118,7 +119,7 @@ import models.ResponsModel;
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
-
+                    System.err.println();
                     switch (res.getStatus()) {
                         case "success":
                             List<String> users = (List<String>) res.getData();
@@ -149,8 +150,13 @@ import models.ResponsModel;
                             break;
                      case "gameStart":
                                 try {
-                                    GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-                                    Platform.runLater(() -> navigateToGame(game));
+                                    // JsonElement jsonElement = gson.toJsonTree(res.getData());
+                                    GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                                    if (gameData == null) {
+                                        showError("Data Error", "Could not parse game data");
+                                        return;
+                                    }
+                                    startGame(gameData);
                                 } catch (JsonSyntaxException e) {
                                     Platform.runLater(() -> showAlert("Failed to parse game data."));
                                     e.printStackTrace();
@@ -241,16 +247,17 @@ import models.ResponsModel;
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-private boolean validateGameModel(GameModel game) {
-    System.out.println("!!!!!!"+game.toString());
-    return game != null &&
-           game.getGameId() != null &&
-           game.getPlayer1() != null &&
-           game.getPlayer1Symbol() != null &&
-           game.getPlayer2() != null &&
-           game.getPlayer2Symbol() != null;
-    
-}
+
+    private boolean validateGameModel(GameModel game) {
+        System.out.println("!!!!!!"+game.toString());
+        return game != null &&
+            game.getGameId() != null &&
+            game.getPlayer1() != null &&
+            game.getPlayer1Symbol() != null &&
+            game.getPlayer2() != null &&
+            game.getPlayer2Symbol() != null;
+        
+    }
 
 
 private void acceptInvite(Object data) {
@@ -259,38 +266,50 @@ private void acceptInvite(Object data) {
         dos.writeUTF(jsonRequest);
         dos.flush();
 
-        String response = dis.readUTF();
-        ResponsModel res = gson.fromJson(response, ResponsModel.class);
-         System.out.println(res.toString());
-        if ("success".equals(res.getStatus())) {
-            GameModel gameModel = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-            GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-        if (gameData == null || gameData.getGameId() == null || gameData.getBoard() == null) {
-            showError("Error", "Invalid game data received from the server.");
-            return;
-        }
-            System.out.println("!!!!!!!!!!!!!!game model in accept before validation:"+gameModel.toString());
-            if (validateGameModel(gameModel)) {
-                System.out.println("!!!!!!!!!!!!!!game model in accept after validation:"+gameModel.toString());
-                navigateToGame(gameModel);
-            } else {
-                showAlert("Game start failed: Invalid game data received.");
-            }
-        } else if ("error".equals(res.getStatus())) {
-            showAlert("Error: " + res.getMessage());
-        } else {
-            showAlert("Unexpected response: " + res.getStatus());
-        }
+        // String response = dis.readUTF();
+        // ResponsModel res = gson.fromJson(response, ResponsModel.class);
+        //  System.out.println(res.toString());
+
+        // if ("gameStart".equals(res.getStatus())) {
+        //     // Get the raw JSON data
+        //     JsonElement jsonElement = gson.toJsonTree(res.getData());
+        //     System.err.println(jsonElement);
+        //     GameModel gameModel = gson.fromJson(jsonElement, GameModel.class);
+        //     // GameModel gameModel;
+        //     // if (jsonElement.isJsonArray()) {
+        //         // If it's an array, get the first element
+        //         // gameModel = gson.fromJson(jsonElement.getAsJsonArray().get(0), GameModel.class);
+        //     // } else {
+        //         // If it's an object, parse directly
+        //         // gameModel = gson.fromJson(jsonElement, GameModel.class);
+        //     // }
+
+        //     if (gameModel == null || !validateGameModel(gameModel)) {
+        //         showError("Error", "Invalid game data received from the server.");
+        //         return;
+        //     }
+
+        //     System.out.println("Game model validated: " + gameModel.toString());
+        //     navigateToGame(gameModel);
+
+        // }else if ("error".equals(res.getStatus())) {
+        //     showAlert("Error: " + res.getMessage());
+        // } else {
+        //     showAlert("Unexpected response: " + res.getStatus());
+        // }
     } catch (IOException ex) {
         System.err.println("Error accepting invite: " + ex.getMessage());
         showAlert("Failed to accept the invite. Please check your connection.");
     }
 }
 
-    private void startGame(GameModel game) {
+private void startGame(GameModel game) {
     try {
         if (!validateGameModel(game)) {
-            throw new IllegalStateException("Invalid game data received.");
+            Platform.runLater(() -> {
+                showError("Error", "Invalid game data received.");
+            });
+            return;
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -311,11 +330,17 @@ private void acceptInvite(Object data) {
 
         System.out.println("Game Start JSON: " + gson.toJson(response));
 
-        navigateToGame(game);
-    } catch (IllegalStateException e) {
-        showAlert("Game start failed: " + e.getMessage());
+        Platform.runLater(() -> {
+            try {
+                navigateToGame(game);
+            } catch (Exception e) {
+                showError("Navigation Error", "Failed to start game: " + e.getMessage());
+            }
+        });
     } catch (Exception e) {
-        showAlert("An unexpected error occurred: " + e.getMessage());
+        Platform.runLater(() -> {
+            showError("Game Error", "An unexpected error occurred: " + e.getMessage());
+        });
     }
 }
 
@@ -334,48 +359,67 @@ private void acceptInvite(Object data) {
             }
         });
     }
-private void showError(String title, String message) {
-    Alert alert = new Alert(Alert.AlertType.ERROR);
-    alert.setTitle(title);
-    alert.setHeaderText(null);
-    alert.setContentText(message);
-    alert.showAndWait();
-}
+    private void showError(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
 
-    public void showAlert(String txt) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        Stage currentStage = (Stage) score.getScene().getWindow();
-        alert.initOwner(currentStage);
-        alert.setHeaderText(txt);
-        alert.getButtonTypes().clear();
-        alert.getButtonTypes().add(ButtonType.CLOSE);
-        alert.showAndWait();
+    // public void showAlert(String txt) {
+    //     Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    //     Stage currentStage = (Stage) score.getScene().getWindow();
+    //     alert.initOwner(currentStage);
+    //     alert.setHeaderText(txt);
+    //     alert.getButtonTypes().clear();
+    //     alert.getButtonTypes().add(ButtonType.CLOSE);
+    //     alert.showAndWait();
+    // }
+    private void showAlert(String txt) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            if (score != null && score.getScene() != null) {
+                Stage currentStage = (Stage) score.getScene().getWindow();
+                alert.initOwner(currentStage);
+            }
+            alert.setHeaderText(txt);
+            alert.getButtonTypes().clear();
+            alert.getButtonTypes().add(ButtonType.CLOSE);
+            alert.showAndWait();
+        });
     }
 
     private void navigateToGame(GameModel game) {
         System.out.println("SHAKL ELGAMEE F ELNAVIGATE"+game.toString());
-    try {
-        if (!validateGameModel(game)) {
-            showAlert("Invalid game data. Cannot start the game.");
-            return;
+        try {
+            if (!validateGameModel(game)) {
+                showAlert("Invalid game data. Cannot start the game.");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/onlineGame.fxml"));
+            Parent root = loader.load();
+
+            onlineGamecontroller controller = loader.getController();
+            if (controller == null) {
+                showAlert("Controller is null!!");
+                return;
+            }
+            controller.initializeGame(game);
+
+            Stage stage = (Stage) onlineusers.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            System.out.println(game.toString());
+            System.out.println(e.toString());
+            e.printStackTrace();
+            showAlert("Failed to load the game screen. Please try again.");
         }
-
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/onlineGame.fxml"));
-        Parent root = loader.load();
-
-        onlineGamecontroller controller = loader.getController();
-
-        controller.startGame(game);
-
-        Stage stage = (Stage) onlineusers.getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
-    } catch (IOException e) {
-        System.out.println(game.toString());
-        System.out.println(e.toString());
-        showAlert("Failed to load the game screen. Please try again.");
     }
-}
 
     private void cleanupResources() {
     running = false;
