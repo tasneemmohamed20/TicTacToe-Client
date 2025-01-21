@@ -24,6 +24,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import models.GameModel;
+import models.GameRecord;
+import models.Move;
 import models.RequsetModel;
 import models.ResponsModel;
 
@@ -55,9 +57,15 @@ public class onlineGamecontroller implements Initializable {
     private String gameId;
 
     private GameModel gameData;
-
+    boolean isRecording = false;
+    GameRecord record;
     private final Image xImage = new Image("/assets/x.png");
     private final Image oImage = new Image("/assets/o.png");
+    String userName;
+     public void setName(String name) {
+        userName = name;
+    }
+
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -215,6 +223,11 @@ public class onlineGamecontroller implements Initializable {
                                             setCellImage(cell, oImage);
                                         }
                                         cell.setDisable(true);
+                                    }
+                                     if (isRecording) {
+                                        record.saveMove(new Move(boardState[i], cellId));
+                                        //System.out.println("File saved to: " + new File("rec.txt").getAbsolutePath());
+
                                     }
                                 }
                             }
@@ -397,6 +410,22 @@ public class onlineGamecontroller implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             //showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+        }
+    }
+     @FXML
+    private void handleRecordButton(ActionEvent event) {
+        if (!isRecording) {
+            //  record.saveRecordName("rec.txt");
+
+            isRecording = true;
+            record = new GameRecord(userName + ".txt");
+            record.saveRecordName();
+            recordGame.setText("Stop Recording");
+
+        } else {
+            isRecording = false;
+            recordGame.setText("Start Recording");
+            System.out.println("Recording Stopped Game recording has been stopped.");
         }
     }
 }

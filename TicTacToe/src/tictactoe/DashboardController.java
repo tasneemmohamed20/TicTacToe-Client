@@ -383,6 +383,7 @@ import models.ResponsModel;
                 showAlert("Controller is null!!");
                 return;
             }
+            controller.setName(userName);
             controller.initializeGameUI(game);
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
@@ -409,4 +410,19 @@ import models.ResponsModel;
     }
     System.out.println("Resources cleaned up, thread stopped.");
 }
+    
+    @FXML
+    private void navToRecods(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("AllRecords.fxml"));
+            Parent root = loader.load();
+            AllRecordsController controller = loader.getController();
+            controller.setName(userName);
+            Stage stage = (Stage) onlineusers.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 }
