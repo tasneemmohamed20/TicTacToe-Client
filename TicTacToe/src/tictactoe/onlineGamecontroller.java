@@ -1,27 +1,36 @@
 package tictactoe;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import models.GameModel;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import com.google.gson.Gson;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import models.RequsetModel;
-import models.ResponsModel;
+import java.util.ResourceBundle;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+import models.GameModel;
+import models.RequsetModel;
+import models.ResponsModel;
 
-public class onlineGamecontroller {
+/**
+ * FXML Controller class to manage the online Tic Tac Toe game.
+ */
+public class onlineGamecontroller implements Initializable {
 
     @FXML
     private Label labelPlayerX;
@@ -36,284 +45,358 @@ public class onlineGamecontroller {
     @FXML
     private Button recordGame;
 
-    private String currentPlayer = "X";
-    private String[] board = new String[9];
-    private boolean gameEnded = false;
-
+    private final Gson gson = new Gson();
     private DataOutputStream dos;
     private DataInputStream dis;
-    private Gson gson = new Gson();
-    GameModel gameModel;
+    private String currentPlayer;
+    private boolean isPlayerTurn = false;
+    private String playerSymbol;
+    private String opponentSymbol;
+    private String gameId;
+
+    private GameModel gameData;
 
     private final Image xImage = new Image("/assets/x.png");
     private final Image oImage = new Image("/assets/o.png");
 
-    public void startGame(GameModel game) {
-        gameModel = game;
-        labelPlayerX.setText(game.getPlayer1());
-        labelPlayerO.setText(game.getPlayer2());
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        try {
+            PlayerSocket playerSocket = PlayerSocket.getInstance();
+            dos = playerSocket.getDataOutputStream();
+            dis = playerSocket.getDataInputStream();
 
-        for (int i = 0; i < board.length; i++) {
-            board[i] = "";
+            if (gameData != null) {
+                startGame(gameData);
+            }
+
+            startServerListener();
+        } catch (IOException ex) {
+            showError("Connection Error", "Failed to connect to the server.");
         }
     }
 
-    public void setDataOutputStream(DataOutputStream dos) {
-        this.dos = dos;
+    public void initializeGame(GameModel game) {
+        if (game == null) {
+            throw new IllegalArgumentException("Game data cannot be null");
+        }
+        this.gameData = game;
     }
 
-    public void setDataInputStream(DataInputStream dis) {
-        this.dis = dis;
-    }
-
-    @FXML
-    private void handleCellAction(ActionEvent event) {
-        if (gameEnded) {
+    public void startGame(GameModel game) {
+        if (game == null) {
+            showError("Error", "Game data is null. Cannot start the game.");
             return;
         }
 
-        Button clickedButton = (Button) event.getSource();
-        int cellIndex = getCellIndex(clickedButton);
+        this.currentPlayer = game.getPlayer1();
+        this.playerSymbol = game.getCurrentPlayer().equals(game.getPlayer1())
+                ? game.getPlayer1Symbol() : game.getPlayer2Symbol();
+        this.opponentSymbol = game.getCurrentPlayer().equals(game.getPlayer1())
+                ? game.getPlayer2Symbol() : game.getPlayer1Symbol();
+        this.gameId = game.getGameId();
 
-        if (cellIndex >= 0 && cellIndex < 9 && board[cellIndex].isEmpty()) {
-            board[cellIndex] = currentPlayer;
-
-            // تعيين الصورة بناءً على اللاعب الحالي
-            if (currentPlayer.equals("X")) {
-                setCellImage(clickedButton, xImage);
-            } else {
-                setCellImage(clickedButton, oImage);
-            }
-
-            clickedButton.setDisable(true); // تعطيل الزر بعد النقر
-            sendMoveToServer(gameModel, board, cellIndex);
-
-            if (checkWinner()) {
-                gameEnded = true;
-                System.out.println("Player " + currentPlayer + " wins!");
-                return;
-            }
-
-            if (isDraw()) {
-                gameEnded = true;
-                System.out.println("It's a draw!");
-                return;
-            }
-
-            currentPlayer = (currentPlayer.equals("X")) ? "O" : "X"; // تغيير الدور
-        } else {
-            System.out.println("Invalid move: Cell is already occupied or out of range.");
-        }
-    }
-
-    private int getCellIndex(Button clickedButton) {
-        if (clickedButton == cell1) {
-            return 0;
-        }
-        if (clickedButton == cell2) {
-            return 1;
-        }
-        if (clickedButton == cell3) {
-            return 2;
-        }
-        if (clickedButton == cell4) {
-            return 3;
-        }
-        if (clickedButton == cell5) {
-            return 4;
-        }
-        if (clickedButton == cell6) {
-            return 5;
-        }
-        if (clickedButton == cell7) {
-            return 6;
-        }
-        if (clickedButton == cell8) {
-            return 7;
-        }
-        if (clickedButton == cell9) {
-            return 8;
-        }
-        return -1;
-    }
-
-    private boolean checkWinner() {
-        // التحقق من الصفوف
-        for (int i = 0; i < 3; i++) {
-            if (board[i * 3].equals(currentPlayer)
-                    && board[i * 3 + 1].equals(currentPlayer)
-                    && board[i * 3 + 2].equals(currentPlayer)) {
-                return true;
-            }
-        }
-
-        // التحقق من الأعمدة
-        for (int i = 0; i < 3; i++) {
-            if (board[i].equals(currentPlayer)
-                    && board[i + 3].equals(currentPlayer)
-                    && board[i + 6].equals(currentPlayer)) {
-                return true;
-            }
-        }
-
-        // التحقق من القطر الرئيسي
-        if (board[0].equals(currentPlayer)
-                && board[4].equals(currentPlayer)
-                && board[8].equals(currentPlayer)) {
-            return true;
-        }
-
-        // التحقق من القطر الثانوي
-        if (board[2].equals(currentPlayer)
-                && board[4].equals(currentPlayer)
-                && board[6].equals(currentPlayer)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private boolean isDraw() {
-        for (String cell : board) {
-            if (cell.isEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void sendMoveToServer(GameModel game, String[] board, int cellIndex) {
-        try {
-            Map<String, String> data = new HashMap<>();
-            data.put("move", String.valueOf(cellIndex)); // رقم الحركة
-            data.put("player", currentPlayer); // رمز اللاعب (X أو O)
-
-            
-            Map<String, Object> request = new HashMap<>();
-            request.put("action", "move"); 
-            request.put("data", data); 
-
-            
-            String jsonRequest = gson.toJson(request);
-            System.out.println("Sent to server: " + jsonRequest);
-
-           
-            dos.writeUTF(jsonRequest);
-            System.err.println("############################################");
-            Thread.sleep(100);
-            //dos.flush();
-           
-        } catch (IOException ex) {
-            System.err.println("Error sending move to server: " + ex.getMessage());
-        } catch (InterruptedException ex) {
-            Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-    }
-
-    void handleOpponentMove(Object data) {
         Platform.runLater(() -> {
-            try {
-                Map<String, Object> gameState = (Map<String, Object>) data;
-                System.out.println("Game State: " + gameState);
+            labelPlayerX.setText(game.getPlayer1());
+            labelPlayerO.setText(game.getPlayer2());
+            labelScoreX.setText("0");
+            labelScoreO.setText("0");
+            resetBoard();
+        });
 
-                // تحديث اللوحة بناءً على البيانات المُستقبلة
-                updateBoard(gameState);
-            } catch (Exception ex) {
-                System.err.println("Error updating UI: " + ex.getMessage());
+        isPlayerTurn = game.getCurrentPlayer().equals(currentPlayer);
+        System.out.println("Game started successfully. Game ID: " + gameId);
+    }
+
+    void initializeGameUI(GameModel game) {
+        labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
+        labelPlayerO.setText(game.getPlayer2() + " (" + game.getPlayer2Symbol() + ")");
+        labelScoreX.setText("0");
+        labelScoreO.setText("0");
+
+        resetBoard();
+
+        String[] board = game.getBoard();
+        for (int i = 0; i < board.length; i++) {
+            String cellId = "cell" + (i + 1);
+            Button cell = getCellById(cellId);
+            if (cell != null) {
+                cell.setText(board[i] == null ? "" : board[i]);
+                cell.setDisable(board[i] != null);
             }
-        });
+        }
     }
 
-    void handleGameOver(Object data) {
-        Platform.runLater(() -> {
-            Map<String, String> gameOverData = (Map<String, String>) data;
-            String winner = gameOverData.get("winner");
-
-            // عرض رسالة نهاية اللعبة
-            showGameOverAlert(winner);
-        });
-    }
-
-    private void updateBoard(Map<String, Object> gameState) {
-        // تحديث اللوحة بناءً على البيانات المُستقبلة
-        List<List<String>> board = (List<List<String>>) gameState.get("board");
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                String cellValue = board.get(i).get(j);
-                Button button = getButtonByPosition(i * 3 + j);
-
-                if (button != null && cellValue != null) {
-                    if (cellValue.equals("X")) {
-                        setCellImage(button, xImage);
-                    } else if (cellValue.equals("O")) {
-                        setCellImage(button, oImage);
-                    }
-                    button.setDisable(true);
+    private void startServerListener() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    String responseString = dis.readUTF();
+                    ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
+                    Platform.runLater(() -> handleServerResponse(response));
+                } catch (IOException | JsonSyntaxException ex) {
+                    Platform.runLater(() -> showError("Connection Error",
+                            "Disconnected from the server: " + ex.getMessage()));
+                    break;
                 }
             }
+        }).start();
+    }
+
+    private void handleServerResponse(ResponsModel response) {
+        if (response == null) {
+            System.out.println("Received an empty or null response.");
+            return;
         }
 
-        // تحديث اللاعب الحالي
-        String currentPlayer = (String) gameState.get("currentPlayer");
-        System.out.println("Current Player: " + currentPlayer);
+        switch (response.getStatus()) {
+            case "gameStart":
+                if (response.getData() != null) {
+                    GameModel gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
+                    startGame(gameData);
+                } else {
+                    showError("Data Error", "Game data is missing.");
+                }
+                break;
 
-        // تحديث حالة اللعبة
-        boolean gameOver = (boolean) gameState.get("gameOver");
-        if (gameOver) {
-            System.out.println("Game Over!");
+            case "makeMove":
+                if (response.getData() != null) {
+                    updateBoard((Map<String, String>) response.getData());
+                } else {
+                    showError("Data Error", "Move data is missing.");
+                }
+                break;
+
+            case "gameOver":
+
+                   showVideoAlert("gameOver", "/assets/bravo.mp4"); 
+                
+                //handleGameOver(response.getMessage(), winner);
+                break;
+
+            case "info":
+                System.out.println("Info message: " + response.getMessage());
+                Platform.runLater(() -> {
+                    if (response.getMessage().contains("Your turn")) {
+                        isPlayerTurn = true;
+                    }
+                });
+                break;
+
+            case "error":
+                showError("Server Error", response.getMessage());
+                break;
+
+            case "update":
+                if (response.getData() != null) {
+                    try {
+                        Map<String, Object> updateData = gson.fromJson(
+                                gson.toJson(response.getData()),
+                                new TypeToken<Map<String, Object>>() {
+                                }.getType()
+                        );
+
+                        String[] boardState = gson.fromJson(
+                                gson.toJson(updateData.get("board")),
+                                String[].class
+                        );
+                        String currentTurn = (String) updateData.get("currentTurn");
+
+                       
+                        Platform.runLater(() -> {
+                            for (int i = 0; i < boardState.length; i++) {
+                                if (boardState[i] != null) {
+                                    String cellId = "cell" + (i + 1);
+                                    Button cell = getCellById(cellId);
+                                    if (cell != null) {
+                                        if (boardState[i].equals("X")) {
+                                            setCellImage(cell, xImage);
+                                        } else {
+                                            setCellImage(cell, oImage);
+                                        }
+                                        cell.setDisable(true);
+                                    }
+                                }
+                            }
+
+                            isPlayerTurn = currentTurn.equals(playerSymbol);
+                            System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
+                                    + ", Player symbol: " + playerSymbol
+                                    + ", isPlayerTurn: " + isPlayerTurn);
+                        });
+                    } catch (Exception e) {
+                        System.err.println("Error parsing update data: " + e.getMessage());
+                    }
+                }
+                break;
+
+            default:
+                System.out.println("Unknown status in controller: " + response.getStatus());
         }
     }
 
-    private Button getButtonByPosition(int position) {
-        switch (position) {
-            case 0:
+    private Button getCellById(String cellId) {
+        switch (cellId) {
+            case "cell1":
                 return cell1;
-            case 1:
+            case "cell2":
                 return cell2;
-            case 2:
+            case "cell3":
                 return cell3;
-            case 3:
+            case "cell4":
                 return cell4;
-            case 4:
+            case "cell5":
                 return cell5;
-            case 5:
+            case "cell6":
                 return cell6;
-            case 6:
+            case "cell7":
                 return cell7;
-            case 7:
+            case "cell8":
                 return cell8;
-            case 8:
+            case "cell9":
                 return cell9;
             default:
                 return null;
         }
     }
 
-    private void showGameOverAlert(String winner) {
+    private void handleGameOver(String resultMessage, String winner) {
+        
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Game Over");
-        alert.setHeaderText(null);
+        alert.setHeaderText(resultMessage);
+        alert.showAndWait();
 
-        if (winner.equals("Draw")) {
-            alert.setContentText("It's a draw!");
-        } else {
-            alert.setContentText("Player " + winner + " wins!");
+       
+        if (winner != null) {
+            String videoPath = winner.equals(playerSymbol) ? "/assets/bravo.mp4" : "/assets/looser.mp4";
+            showVideoAlert(resultMessage, "/assets/bravo.mp4");
         }
 
+        
+        resetBoard();
+    }
+
+    private String determineWinner(String resultMessage) {
+        if (resultMessage.contains(playerSymbol)) {
+            return playerSymbol; 
+        } else if (resultMessage.contains(opponentSymbol)) {
+            return opponentSymbol; 
+        } else {
+            return null; 
+        }
+    }
+
+    private void resetBoard() {
+        Platform.runLater(() -> {
+            for (int i = 1; i <= 9; i++) {
+                Button cell = getCellById("cell" + i);
+                if (cell != null) {
+                    cell.setText("");
+                    cell.setDisable(false);
+                }
+            }
+        });
+    }
+
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(message);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleCellAction(ActionEvent event) {
+        Button clickedCell = (Button) event.getSource();
+        String cellId = clickedCell.getId();
+
+     
+        if (!isPlayerTurn) {
+            showError("Invalid Move", "It's not your turn!");
+            return;
+        }
+
+       
+        if (!clickedCell.getText().isEmpty()) {
+            showError("Invalid Move", "This cell is already occupied!");
+            return;
+        }
+
+        try {
+            
+            Map<String, String> moveData = new HashMap<>();
+            moveData.put("cell", cellId);
+            moveData.put("symbol", playerSymbol);
+
+            
+            if (playerSymbol.equals("X")) {
+                setCellImage(clickedCell, xImage);
+            } else {
+                setCellImage(clickedCell, oImage);
+            }
+
+            RequsetModel request = new RequsetModel("makeMove", moveData);
+            dos.writeUTF(gson.toJson(request));
+            dos.flush();
+
+            isPlayerTurn = false; 
+        } catch (IOException ex) {
+            showError("Connection Error", "Failed to send move to server: " + ex.getMessage());
+        }
+    }
+
+    private void updateBoard(Map<String, String> moveData) {
+        if (moveData == null || !moveData.containsKey("cell") || !moveData.containsKey("symbol")) {
+            return;
+        }
+
+        String cellId = moveData.get("cell");
+        String symbol = moveData.get("symbol");
+
+        Button targetCell = getCellById(cellId);
+        if (targetCell != null) {
+            
+            if (symbol.equals("X")) {
+                setCellImage(targetCell, xImage);
+            } else {
+                setCellImage(targetCell, oImage);
+            }
+            targetCell.setDisable(true); 
+        }
     }
 
     private void setCellImage(Button cell, Image image) {
         ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(100); // تعيين عرض الصورة
-        imageView.setFitHeight(100); // تعيين ارتفاع الصورة
-        imageView.setPreserveRatio(true); // الحفاظ على نسبة العرض إلى الارتفاع
-        cell.setGraphic(imageView); // تعيين الصورة للزر
+        imageView.setFitWidth(100);
+        imageView.setFitHeight(100);
+        imageView.setPreserveRatio(true);
+        cell.setGraphic(imageView);
     }
 
-    @FXML
-    private void handleRecordGame(ActionEvent event) {
-        System.out.println("Game recorded!");
+    private void showVideoAlert(String title, String videoPath) {
+        try {
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/VideoLayout.fxml"));
+
+            Parent root = loader.load();
+
+            VideoLayoutController controller = loader.getController();
+
+            controller.initialize(videoPath);
+            controller.setWinnerText(title);
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.show();
+            controller.setOnNewGameAction(() -> {
+                System.out.println("Starting a new game...");
+                resetBoard();
+                stage.close();
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            //showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+        }
     }
 }

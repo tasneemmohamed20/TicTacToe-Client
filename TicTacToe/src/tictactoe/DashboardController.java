@@ -1,6 +1,8 @@
 package tictactoe;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -33,7 +36,7 @@ import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
 
-public class DashboardController implements Initializable {
+  public class DashboardController implements Initializable {
 
     @FXML
     private Button games;
@@ -48,14 +51,11 @@ public class DashboardController implements Initializable {
     private boolean[] isInvited = {false};
     private String userScore;
     private String userName;
-    private Timer refreshTimer;
 
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
-    @FXML
-    private Button backButton;
-
+    
     public void setScore(String playerscore) {
         userScore = playerscore;
         if (userScore != null) {
@@ -94,6 +94,8 @@ public class DashboardController implements Initializable {
 
             String responseOnlineUsers = dis.readUTF();
             ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
+            System.out.println("Status: " + res.getStatus());
+            System.out.println("Data: " + res.getData());
             if ("success".equals(res.getStatus())) {
                 List<String> users = (List<String>) res.getData();
                 currentName = users.get(users.size() - 1);
@@ -101,19 +103,22 @@ public class DashboardController implements Initializable {
                 displayOnlineUsers(users);
             }
         } catch (IOException ex) {
-            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error fetching online users", ex);
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    Thread t;
-    boolean running = true;
+    volatile Thread t;
+    private volatile boolean running = true;
+    
 
     private void refresh(DataOutputStream dos, DataInputStream dis) {
-
         t = new Thread(() -> {
             boolean isRefOn = true;
             while (running) {
                 try {
+                    if (!running || Thread.interrupted()) {
+                        System.out.println("Refresh Thread stopped");
+                        break;
+                    };
 
                     if (isRefOn) {
                         isRefOn = false;
@@ -124,9 +129,11 @@ public class DashboardController implements Initializable {
                     }
 
                     String responseOnlineUsers = dis.readUTF();
-                    System.out.println("fun refresh responseOnlineUsers:" + responseOnlineUsers);
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
-
+                    
+                    if (!running) break;
+                    
+                    System.err.println("!!!!!!!!!!! response of refresh"+res.toString());
                     switch (res.getStatus()) {
                         case "success":
                             List<String> users = (List<String>) res.getData();
@@ -139,6 +146,7 @@ public class DashboardController implements Initializable {
 
                         case "invitation":
                             System.out.println("Invitation received: " + res.getMessage());
+                            System.out.println("Invitation received: " + res.getData());
                             Platform.runLater(() -> showInviteAlert(res.getMessage(), res.getData()));
                             break;
 
@@ -151,35 +159,38 @@ public class DashboardController implements Initializable {
                             System.out.println(res.getMessage());
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
-
-                        case "accept":
-                            Platform.runLater(() -> startGame(res));
+                        case "gameStart":
+                            running = false; 
+                           if (t != null && t.isAlive()) {
+                               t.interrupt();
+                           }
+                            stopRefreshThread();
+                            System.out.println("Game start received: " + res.getData());
+                            GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                            Platform.runLater(() -> {
+                                startGame(gameData); 
+                                System.out.println("Refresh thread status: " + (t != null && t.isAlive()));
+                            });
                             break;
-                        case "start_game":
-                            Platform.runLater(() -> startGame(res));
+                        case "info":
+                            System.out.println("Info message: " + res.getMessage());
                             break;
-                        case "move":
-                            onlineGamecontroller oGamecontroller = new onlineGamecontroller();
-                            Platform.runLater(() -> oGamecontroller.handleOpponentMove(res.getData()));
+                         case "notAllowed":
+                            Platform.runLater(() -> showAlert("You are not allowed to play. Please wait or check eligibility."));
                             break;
-                        case "game_over":
-                            onlineGamecontroller ooGamecontroller = new onlineGamecontroller();
-                            Platform.runLater(() -> ooGamecontroller.handleGameOver(res.getData()));
-                            break;
-                        case "error":
-                            System.out.println("Error: " + res.getMessage());
-                            break;
-
                         default:
-                            System.out.println("Unknown status: " + res.getStatus());
+                            System.out.println("Unknown status in dashboard: " + res.getStatus());
                             break;
                     }
                     Thread.sleep(5000);
                 } catch (IOException ex) {
+                    if (!running) break;
                     Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
-                    System.out.println("error!!!!!!!");
                 } catch (InterruptedException ex) {
                     System.out.println("Thread stopped");
+                    break;
+                // } finally {
+                //     System.out.println("Refresh thread terminated");
                 }
             }
         });
@@ -202,7 +213,7 @@ public class DashboardController implements Initializable {
                     inviteButton.setOnAction(event -> {
                         invitedUser = getItem();
                         sendInvite(currentName, invitedUser);
-                        inviteButton.setText("Invited");
+                        inviteButton.setText("invited");
                     });
 
                     content = new HBox(20, label, inviteButton);
@@ -211,7 +222,9 @@ public class DashboardController implements Initializable {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    if (empty || item == null || item.equals(userName)) {
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else if (item.equals(userName)) {
                         setGraphic(null);
                     } else {
                         label.setText(item);
@@ -252,27 +265,67 @@ public class DashboardController implements Initializable {
         }
     }
 
-    void acceptInvite(Object data) {
+    private boolean validateGameModel(GameModel game) {
+        System.out.println("!!!!!!"+game.toString());
+        return game != null &&
+            game.getGameId() != null &&
+            game.getPlayer1() != null &&
+            game.getPlayer1Symbol() != null &&
+            game.getPlayer2() != null &&
+            game.getPlayer2Symbol() != null;
+        
+    }
+
+    private void acceptInvite(Object data) {
         try {
-            RequsetModel requsetModel = new RequsetModel("accept", data);
+            String jsonRequest = gson.toJson(new RequsetModel("accept", data));
+            dos.writeUTF(jsonRequest);
+            dos.flush();
 
-            String acceptJson = gson.toJson(requsetModel);
-            dos.writeUTF(acceptJson);
 
+            System.out.println("Accepted invite, waiting for game to start...");
         } catch (IOException ex) {
-            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Error accepting invite: " + ex.getMessage());
+            showAlert("Failed to accept the invite. Please check your connection.");
         }
     }
 
-    void startGame(ResponsModel res) {
-        GameModel game = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-        if (game == null || game.getPlayer1() == null || game.getPlayer2() == null) {
-            System.out.println("GameModel or players data is null! Cannot start game.");
-            return;
+
+    private void startGame(GameModel game) {
+        try {
+            stopRefreshThread();
+            if (!validateGameModel(game)) {
+                Platform.runLater(() -> showError("Error", "Invalid game data received."));
+                return;
+            }
+            Platform.runLater(() -> navigateToGame(game));
+        } catch (Exception e) {
+            Platform.runLater(() -> showError("Game Error", "An unexpected error occurred: " + e.getMessage()));
         }
-        System.out.println("GameModel: " + game.toString());
-        System.out.println("Start game between " + game.getPlayer1() + " and " + game.getPlayer2());
-        navigateToGame(game);
+    }
+
+    private synchronized void stopRefreshThread() {
+        running = false; 
+        
+        if (t != null) {
+            try {
+                t.interrupt(); 
+                t.join(2000); 
+                
+                if (t.isAlive()) {
+                    System.err.println("Thread did not stop within timeout");
+                    t = null; 
+                }
+//                if (dis != null) dis.close();
+//                if (dos != null) dos.close();
+            } catch (InterruptedException ex) {
+                System.err.println("Thread interruption error: " + ex.getMessage());
+//            } catch (IOException ex) {
+//                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        System.out.println("Refresh thread stopped successfully");
     }
 
     void showInviteAlert(String txt, Object data) {
@@ -290,73 +343,70 @@ public class DashboardController implements Initializable {
         });
     }
 
-    public void showAlert(String txt) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        Stage currentStage = (Stage) score.getScene().getWindow();
-        alert.initOwner(currentStage);
-        alert.setHeaderText(txt);
-        alert.getButtonTypes().clear();
-        alert.getButtonTypes().add(ButtonType.CLOSE);
-        alert.showAndWait();
+    private void showError(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 
-    void navigateToGame(GameModel game) {
+    private void showAlert(String txt) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            if (score != null && score.getScene() != null) {
+                Stage currentStage = (Stage) score.getScene().getWindow();
+                alert.initOwner(currentStage);
+            }
+            alert.setHeaderText(txt);
+            alert.getButtonTypes().clear();
+            alert.getButtonTypes().add(ButtonType.CLOSE);
+            alert.showAndWait();
+        });
+    }
+
+    private void navigateToGame(GameModel game) {
+        System.out.println("SHAKL ELGAMEE F ELNAVIGATE"+game.toString());
         try {
-            if (game == null) {
-                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error: GameModel is null!");
+            if (!validateGameModel(game)) {
+                showAlert("Invalid game data. Cannot start the game.");
                 return;
             }
 
-            URL fxmlLocation = getClass().getResource("/tictactoe/onlineGame.fxml");
-            if (fxmlLocation == null) {
-                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error: onlineGame.fxml not found!");
-                return;
-            }
-
-            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/onlineGame.fxml"));
             Parent root = loader.load();
 
-            onlineGamecontroller gameController = loader.getController();
-            if (gameController == null) {
-                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error: onlineGamecontroller is null!");
+            onlineGamecontroller controller = loader.getController();
+            if (controller == null) {
+                showAlert("Controller is null!!");
                 return;
             }
+            controller.initializeGameUI(game);
 
-            Logger.getLogger(DashboardController.class.getName()).log(Level.INFO, "Navigating to game screen");
-            gameController.startGame(game);
-
-            gameController.setDataInputStream(dis);
-            gameController.setDataOutputStream(dos);
-
-            Stage stage = (Stage) score.getScene().getWindow();
+            Stage stage = (Stage) onlineusers.getScene().getWindow();
             stage.setScene(new Scene(root));
-            stage.setTitle("Game Screen");
-
-        } catch (IOException ex) {
-            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error navigating to game screen", ex);
+            stage.show();
+        } catch (IOException e) {
+            System.out.println(game.toString());
+            System.out.println(e.toString());
+            e.printStackTrace();
+            showAlert("Failed to load the game screen. Please try again.");
         }
     }
 
     private void cleanupResources() {
     running = false;
-    if (t != null) {
+    if (t != null && t.isAlive()) {
         t.interrupt();
     }
     try {
-        if (dis != null) {
-            dis.close();
-        }
-        if (dos != null) {
-            dos.close();
-        }
-    } catch (IOException ex) {
-        Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error closing resources", ex);
+        if (dos != null) dos.close();
+        if (dis != null) dis.close();
+    } catch (IOException e) {
+        System.err.println("Error closing resources: " + e.getMessage());
     }
-    System.out.println("Thread stopped and resources cleaned up.");
+    System.out.println("Resources cleaned up, thread stopped.");
 }
-
-    @FXML
-    private void handleBackButton(ActionEvent event) {
-        //new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
-    }
 }
