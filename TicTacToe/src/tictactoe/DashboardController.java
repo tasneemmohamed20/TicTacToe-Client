@@ -51,11 +51,11 @@ import models.ResponsModel;
     private boolean[] isInvited = {false};
     private String userScore;
     private String userName;
-    private Timer refreshTimer;
 
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
+    
     public void setScore(String playerscore) {
         userScore = playerscore;
         if (userScore != null) {
@@ -113,7 +113,8 @@ import models.ResponsModel;
         t = new Thread(() -> {
             while (running) {
                 try {
-                    String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
+                    if (!running) break;
+                   String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
                     dos.writeUTF(jsonRequest);
                     dos.flush();
 
@@ -145,10 +146,12 @@ import models.ResponsModel;
                             System.out.println(res.getMessage());
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
-                     case "accept":
-                            Platform.runLater(() -> startGame(gson.fromJson(gson.toJson(res.getData()), GameModel.class)));
-                            break;
                      case "gameStart":
+                                    running = false; 
+                                   if (t != null && t.isAlive()) {
+                                       t.interrupt();
+                                   }
+                                System.out.println("Game start received: " + res.getData());
                                 GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
                                 Platform.runLater(() -> startGame(gameData));
                                 break;
@@ -259,54 +262,27 @@ private void acceptInvite(Object data) {
         dos.writeUTF(jsonRequest);
         dos.flush();
 
+
+        System.out.println("Accepted invite, waiting for game to start...");
     } catch (IOException ex) {
         System.err.println("Error accepting invite: " + ex.getMessage());
         showAlert("Failed to accept the invite. Please check your connection.");
     }
 }
 
+
 private void startGame(GameModel game) {
     try {
         if (!validateGameModel(game)) {
-            Platform.runLater(() -> {
-                showError("Error", "Invalid game data received.");
-            });
+            Platform.runLater(() -> showError("Error", "Invalid game data received."));
             return;
         }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "gameStart");
-        response.put("message", "Game started successfully.");
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("gameId", game.getGameId());
-        data.put("player1", game.getPlayer1());
-        data.put("player1Symbol", game.getPlayer1Symbol());
-        data.put("player2", game.getPlayer2());
-        data.put("player2Symbol", game.getPlayer2Symbol());
-        data.put("board", new String[9]); 
-        data.put("currentPlayer", game.getPlayer1());
-        data.put("isPlayerTurn", true);
-
-        response.put("data", data);
-
-        System.out.println("Game Start JSON: " + gson.toJson(response));
-
-        Platform.runLater(() -> {
-            try {
-                navigateToGame(game);
-            } catch (Exception e) {
-                showError("Navigation Error", "Failed to start game: " + e.getMessage());
-            }
-        });
+        running = false;
+        Platform.runLater(() -> navigateToGame(game));
     } catch (Exception e) {
-        Platform.runLater(() -> {
-            showError("Game Error", "An unexpected error occurred: " + e.getMessage());
-        });
+        Platform.runLater(() -> showError("Game Error", "An unexpected error occurred: " + e.getMessage()));
     }
 }
-
-
     void showInviteAlert(String txt, Object data) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
         Stage currentStage = (Stage) score.getScene().getWindow();
@@ -387,7 +363,4 @@ private void startGame(GameModel game) {
     }
     System.out.println("Resources cleaned up, thread stopped.");
 }
-
-
-    
 }
