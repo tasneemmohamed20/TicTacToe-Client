@@ -15,13 +15,7 @@
 <?import javafx.scene.media.MediaView?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="785.0" prefWidth="973.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.onlineGamecontroller">
-   <!-- <left>
-      <MediaView fx:id="mediaView" fitHeight="300.0" fitWidth="400.0" visible="false">
-         <BorderPane.margin>
-            <Insets left="20.0" top="20.0"/>
-         </BorderPane.margin>
-      </MediaView>
-   </left> -->
+   
    <right>
       <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game" BorderPane.alignment="CENTER_RIGHT">
          <BorderPane.margin>
