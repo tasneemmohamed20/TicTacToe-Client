@@ -409,4 +409,37 @@ import models.ResponsModel;
     }
     System.out.println("Resources cleaned up, thread stopped.");
 }
+
+    @FXML
+   private void handleLogout(ActionEvent event) {
+    try {
+        if (dos != null) {
+            Map<String, String> data = new HashMap<>();
+            data.put("username", userName); 
+            String jsonRequest = gson.toJson(new RequsetModel("logout", data));
+            dos.writeUTF(jsonRequest);
+            dos.flush();
+            System.out.println("Logout request sent to server.");
+        }
+    } catch (IOException e) {
+        System.err.println("Error sending logout request: " + e.getMessage());
+    }
+    cleanupResources();
+    navigateToLoginScreen();
+}
+
+
+    private void navigateToLoginScreen() {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Login.fxml")); 
+        Parent root = loader.load();
+
+        Stage stage = (Stage) logout.getScene().getWindow(); 
+        stage.setScene(new Scene(root)); 
+        stage.show();
+    } catch (IOException e) {
+        System.err.println("Error loading login screen: " + e.getMessage());
+        showAlert("Failed to navigate to the login screen. Please try again.");
+    }
+}
 }

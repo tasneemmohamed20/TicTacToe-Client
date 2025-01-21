@@ -25,7 +25,7 @@
       <AnchorPane prefHeight="622.0" prefWidth="514.0" BorderPane.alignment="CENTER">
          <children>
             <Button fx:id="games" layoutX="37.0" layoutY="170.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="134.0" style="-fx-background-color: white;" text="Load a game" />
-            <Button fx:id="logout" layoutX="35.0" layoutY="229.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="134.0" style="-fx-background-color: #C5A0D7;" text="Logout" />
+            <Button fx:id="logout" layoutX="35.0" layoutY="229.0" mnemonicParsing="false" onAction="#handleLogout" prefHeight="40.0" prefWidth="134.0" style="-fx-background-color: #C5A0D7;" text="Logout" />
             <Label fx:id="score" alignment="CENTER" layoutX="335.0" layoutY="26.0" prefHeight="33.0" prefWidth="103.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 35;" text="0" />
             <Label alignment="CENTER" layoutX="308.0" layoutY="74.0" prefHeight="27.0" prefWidth="147.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 18;" text="Your total score" />
             <ImageView fitHeight="260.0" fitWidth="357.0" layoutY="362.0" pickOnBounds="true" preserveRatio="true">
