@@ -106,20 +106,28 @@ import models.ResponsModel;
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    Thread t;
-    boolean running = true;
+    volatile Thread t;
+    private volatile boolean running = true;
+    
 
     private void refresh(DataOutputStream dos, DataInputStream dis) {
         t = new Thread(() -> {
             while (running) {
                 try {
-                    if (!running) break;
-                   String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
+                    if (!running || Thread.interrupted()) {
+                        System.out.println("Refresh Thread stopped");
+                        break;
+                    };
+
+                    String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
                     dos.writeUTF(jsonRequest);
                     dos.flush();
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
+                    
+                    if (!running) break;
+                    
                     System.err.println("!!!!!!!!!!! response of refresh"+res.toString());
                     switch (res.getStatus()) {
                         case "success":
@@ -146,15 +154,19 @@ import models.ResponsModel;
                             System.out.println(res.getMessage());
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
-                     case "gameStart":
-                                    running = false; 
-                                   if (t != null && t.isAlive()) {
-                                       t.interrupt();
-                                   }
-                                System.out.println("Game start received: " + res.getData());
-                                GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
-                                Platform.runLater(() -> startGame(gameData));
-                                break;
+                        case "gameStart":
+                            running = false; 
+                           if (t != null && t.isAlive()) {
+                               t.interrupt();
+                           }
+                            stopRefreshThread();
+                            System.out.println("Game start received: " + res.getData());
+                            GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
+                            Platform.runLater(() -> {
+                                startGame(gameData); 
+                                System.out.println("Refresh thread status: " + (t != null && t.isAlive()));
+                            });
+                            break;
                         case "info":
                             System.out.println("Info message: " + res.getMessage());
                             break;
@@ -162,14 +174,18 @@ import models.ResponsModel;
                             Platform.runLater(() -> showAlert("You are not allowed to play. Please wait or check eligibility."));
                             break;
                         default:
-                            System.out.println("Unknown status: " + res.getStatus());
+                            System.out.println("Unknown status in dashboard: " + res.getStatus());
                             break;
                     }
                     Thread.sleep(5000);
                 } catch (IOException ex) {
+                    if (!running) break;
                     Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (InterruptedException ex) {
                     System.out.println("Thread stopped");
+                    break;
+                // } finally {
+                //     System.out.println("Refresh thread terminated");
                 }
             }
         });
@@ -255,34 +271,58 @@ import models.ResponsModel;
         
     }
 
-
-private void acceptInvite(Object data) {
-    try {
-        String jsonRequest = gson.toJson(new RequsetModel("accept", data));
-        dos.writeUTF(jsonRequest);
-        dos.flush();
-
-
-        System.out.println("Accepted invite, waiting for game to start...");
-    } catch (IOException ex) {
-        System.err.println("Error accepting invite: " + ex.getMessage());
-        showAlert("Failed to accept the invite. Please check your connection.");
-    }
-}
+    private void acceptInvite(Object data) {
+        try {
+            String jsonRequest = gson.toJson(new RequsetModel("accept", data));
+            dos.writeUTF(jsonRequest);
+            dos.flush();
 
 
-private void startGame(GameModel game) {
-    try {
-        if (!validateGameModel(game)) {
-            Platform.runLater(() -> showError("Error", "Invalid game data received."));
-            return;
+            System.out.println("Accepted invite, waiting for game to start...");
+        } catch (IOException ex) {
+            System.err.println("Error accepting invite: " + ex.getMessage());
+            showAlert("Failed to accept the invite. Please check your connection.");
         }
-        running = false;
-        Platform.runLater(() -> navigateToGame(game));
-    } catch (Exception e) {
-        Platform.runLater(() -> showError("Game Error", "An unexpected error occurred: " + e.getMessage()));
     }
-}
+
+
+    private void startGame(GameModel game) {
+        try {
+            stopRefreshThread();
+            if (!validateGameModel(game)) {
+                Platform.runLater(() -> showError("Error", "Invalid game data received."));
+                return;
+            }
+            Platform.runLater(() -> navigateToGame(game));
+        } catch (Exception e) {
+            Platform.runLater(() -> showError("Game Error", "An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    private synchronized void stopRefreshThread() {
+        running = false; 
+        
+        if (t != null) {
+            try {
+                t.interrupt(); 
+                t.join(2000); 
+                
+                if (t.isAlive()) {
+                    System.err.println("Thread did not stop within timeout");
+                    t = null; 
+                }
+//                if (dis != null) dis.close();
+//                if (dos != null) dos.close();
+            } catch (InterruptedException ex) {
+                System.err.println("Thread interruption error: " + ex.getMessage());
+//            } catch (IOException ex) {
+//                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        System.out.println("Refresh thread stopped successfully");
+    }
+
     void showInviteAlert(String txt, Object data) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
         Stage currentStage = (Stage) score.getScene().getWindow();
@@ -297,6 +337,7 @@ private void startGame(GameModel game) {
             }
         });
     }
+
     private void showError(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
