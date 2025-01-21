@@ -76,28 +76,30 @@ public class onlineGamecontroller implements Initializable {
     }
 
     public void startGame(GameModel game) {
-    if (game == null) {
-        showError("Error", "Game data is null. Cannot start the game.");
-        return;
+        if (game == null) {
+            showError("Error", "Game data is null. Cannot start the game.");
+            return;
+        }
+
+        this.currentPlayer = game.getPlayer1();
+        this.playerSymbol = game.getCurrentPlayer().equals(game.getPlayer1()) ? 
+                        game.getPlayer1Symbol() : game.getPlayer2Symbol();
+        this.opponentSymbol = game.getCurrentPlayer().equals(game.getPlayer1()) ? 
+                            game.getPlayer2Symbol() : game.getPlayer1Symbol();
+        this.gameId = game.getGameId();
+
+        Platform.runLater(() -> {
+            labelPlayerX.setText(game.getPlayer1());
+            labelPlayerO.setText(game.getPlayer2());
+            labelScoreX.setText("0");
+            labelScoreO.setText("0");
+            resetBoard();
+        });
+
+        isPlayerTurn = game.getCurrentPlayer().equals(currentPlayer);
+
+        System.out.println("Game started successfully. Game ID: " + gameId);
     }
-
-    this.currentPlayer = game.getPlayer1();
-    this.playerSymbol = game.getPlayer1Symbol();
-    this.opponentSymbol = game.getPlayer2Symbol();
-    this.gameId = game.getGameId();
-
-    Platform.runLater(() -> {
-        labelPlayerX.setText(game.getPlayer1());
-        labelPlayerO.setText(game.getPlayer2());
-        labelScoreX.setText("0");
-        labelScoreO.setText("0");
-        resetBoard();
-    });
-
-    isPlayerTurn = (playerSymbol.equals("X"));
-
-    System.out.println("Game started successfully. Game ID: " + gameId);
-}
 
 
      void initializeGameUI(GameModel game) {
@@ -136,88 +138,95 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void handleServerResponse(ResponsModel response) {
-    if (response == null) {
-        System.out.println("Received an empty or null response.");
-        return;
-    }
+        if (response == null) {
+            System.out.println("Received an empty or null response.");
+            return;
+        }
 
-    switch (response.getStatus()) {
-        case "gameStart":
-            if (response.getData() != null) {
-                GameModel gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
-                startGame(gameData);
-            } else {
-                showError("Data Error", "Game data is missing.");
-            }
-            break;
+        switch (response.getStatus()) {
+            case "gameStart":
+                if (response.getData() != null) {
+                    GameModel gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
+                    startGame(gameData);
+                } else {
+                    showError("Data Error", "Game data is missing.");
+                }
+                break;
 
-        case "makeMove":
-            if (response.getData() != null) {
-                updateBoard((Map<String, String>) response.getData());
-            } else {
-                showError("Data Error", "Move data is missing.");
-            }
-            break;
+            case "makeMove":
+                if (response.getData() != null) {
+                    updateBoard((Map<String, String>) response.getData());
+                } else {
+                    showError("Data Error", "Move data is missing.");
+                }
+                break;
 
-        case "gameOver":
-            handleGameOver(response.getMessage());
-            break;
+            case "gameOver":
+                handleGameOver(response.getMessage());
+                break;
 
-        case "info":
-            System.out.println("Info message: " + response.getMessage());
-            break;
+            case "info":
+                System.out.println("Info message: " + response.getMessage());
+                Platform.runLater(() -> {
+                    if (response.getMessage().contains("Your turn")) {
+                        isPlayerTurn = true;
+                    }
+                });
+                break;
 
-        case "error":
-            showError("Server Error", response.getMessage());
-            break;
-        
-        case "update":
-            if (response.getData() != null) {
-                try {
-                    Map<String, Object> updateData = gson.fromJson(
-                        gson.toJson(response.getData()), 
-                        new TypeToken<Map<String, Object>>(){}.getType()
-                    );
-                    
-                    String[] boardState = gson.fromJson(
-                        gson.toJson(updateData.get("board")), 
-                        String[].class
-                    );
-                    String currentTurn = (String) updateData.get("currentTurn");
-                    
-                    // Update UI
-                    Platform.runLater(() -> {
-                        for (int i = 0; i < boardState.length; i++) {
-                            if (boardState[i] != null) {
-                                String cellId = "cell" + (i + 1);
-                                Button cell = getCellById(cellId);
-                                if (cell != null) {
-                                    cell.setText(boardState[i] != null ? boardState[i] : "");
-                                    cell.setDisable(boardState[i] != null);
+            case "error":
+                showError("Server Error", response.getMessage());
+                break;
+            
+            case "update":
+                if (response.getData() != null) {
+                    try {
+                        Map<String, Object> updateData = gson.fromJson(
+                            gson.toJson(response.getData()), 
+                            new TypeToken<Map<String, Object>>(){}.getType()
+                        );
+                        
+                        String[] boardState = gson.fromJson(
+                            gson.toJson(updateData.get("board")), 
+                            String[].class
+                        );
+                        String currentTurn = (String) updateData.get("currentTurn");
+                        // String currentPlayer = (String) updateData.get("currentPlayer");
+
+                        // Update UI
+                        Platform.runLater(() -> {
+                            for (int i = 0; i < boardState.length; i++) {
+                                if (boardState[i] != null) {
+                                    String cellId = "cell" + (i + 1);
+                                    Button cell = getCellById(cellId);
+                                    if (cell != null) {
+                                        cell.setText(boardState[i] != null ? boardState[i] : "");
+                                        cell.setDisable(boardState[i] != null);
+                                    }
                                 }
                             }
-                        }
 
-                        isPlayerTurn = currentTurn != null && currentTurn.equals(playerSymbol);
+                            isPlayerTurn = currentTurn.equals(playerSymbol);
                             System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn + 
-                                            ", Player symbol: " + playerSymbol + 
-                                            ", isPlayerTurn: " + isPlayerTurn);
-                    });
-                    
-                    // // Get the current turn symbol from server
-                    // String currentTurn = (String) updateData.get("currentTurn");
-                    // isPlayerTurn = currentTurn != null && currentTurn.equals(playerSymbol);
-                    // System.out.println("[DEBUG] Turn updated. Current symbol: " + currentTurn + ", Player symbol: " + playerSymbol + ", isPlayerTurn: " + isPlayerTurn);
-                } catch (Exception e) {
-                    System.err.println("Error parsing update data: " + e.getMessage());
+                                                ", Player symbol: " + playerSymbol + 
+                                                ", isPlayerTurn: " + isPlayerTurn);
+                        });
+                        
+                        // // Get the current turn symbol from server
+                        // String currentTurn = (String) updateData.get("currentTurn");
+                        // isPlayerTurn = currentTurn != null && currentTurn.equals(playerSymbol);
+                        // System.out.println("[DEBUG] Turn updated. Current symbol: " + currentTurn + ", Player symbol: " + playerSymbol + ", isPlayerTurn: " + isPlayerTurn);
+                    } catch (Exception e) {
+                        System.err.println("Error parsing update data: " + e.getMessage());
+                    }
                 }
-            }
-            break;
+                break;
 
-        default:
-            System.out.println("Unknown status in controller: " + response.getStatus());
+            default:
+                System.out.println("Unknown status in controller: " + response.getStatus());
+        }
     }
-}
+
     private Button getCellById(String cellId) {
         switch (cellId) {
             case "cell1": return cell1;
@@ -270,39 +279,6 @@ public class onlineGamecontroller implements Initializable {
         alert.showAndWait();
     }
 
-    // @FXML
-    // private void handleCellAction(ActionEvent event) {
-    //     if (!isPlayerTurn) {
-    //         showError("Invalid Move", "It's not your turn!");
-    //         return;
-    //     }
-
-    //     Button clickedCell = (Button) event.getSource();
-    //     if (!clickedCell.getText().isEmpty()) {
-    //         showError("Invalid Move", "This cell is already occupied!");
-    //         return;
-    //     }
-
-    //     String cellId = clickedCell.getId();
-    //     // clickedCell.setText(playerSymbol);
-    //     // clickedCell.setDisable(true);
-
-    //     try {
-    //         Map<String, String> moveData = new HashMap<>();
-    //         moveData.put("cell", cellId);
-    //         moveData.put("symbol", playerSymbol);
-
-    //         RequsetModel request = new RequsetModel("makeMove", moveData);
-    //         dos.writeUTF(gson.toJson(request));
-    //         dos.flush();
-
-    //         System.out.println("[DEBUG] Move sent to server: " + cellId);
-
-    //     } catch (IOException ex) {
-    //         showError("Connection Error", "Failed to send the move to the server: " + ex.getMessage());
-    //     }
-    // }
-
     @FXML
     private void handleCellAction(ActionEvent event) {
         Button clickedCell = (Button) event.getSource();
@@ -335,7 +311,7 @@ public class onlineGamecontroller implements Initializable {
             System.out.println("[DEBUG] Move sent to server: " + cellId + " with symbol: " + playerSymbol);
             
             // Don't update UI here - wait for server confirmation
-            isPlayerTurn = false; // Temporarily disable moves until server confirms
+            // isPlayerTurn = false; // Temporarily disable moves until server confirms
 
         } catch (IOException ex) {
             showError("Connection Error", "Failed to send move to server: " + ex.getMessage());
@@ -356,12 +332,12 @@ public class onlineGamecontroller implements Initializable {
         targetCell.setDisable(true);
     }
 
-    isPlayerTurn = !symbol.equals(playerSymbol);
-    if (isPlayerTurn) {
-        System.out.println("Your turn, Make your move.");
-    } else {
-        System.out.println("Opponent's turn ,Wait for their move.");
-    }
+    // isPlayerTurn = !symbol.equals(playerSymbol);
+    // if (isPlayerTurn) {
+    //     System.out.println("Your turn, Make your move.");
+    // } else {
+    //     System.out.println("Opponent's turn ,Wait for their move.");
+    // }
 }
 
     
