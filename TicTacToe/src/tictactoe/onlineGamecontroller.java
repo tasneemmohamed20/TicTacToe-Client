@@ -9,16 +9,21 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -26,6 +31,7 @@ import javafx.stage.Stage;
 import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
+import theGame.XO;
 
 /**
  * FXML Controller class to manage the online Tic Tac Toe game.
@@ -59,6 +65,9 @@ public class onlineGamecontroller implements Initializable {
     private final Image xImage = new Image("/assets/x.png");
     private final Image oImage = new Image("/assets/o.png");
 
+    private int scoreX = 0;
+    private int scoreO = 0;
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         try {
@@ -89,7 +98,6 @@ public class onlineGamecontroller implements Initializable {
             return;
         }
 
-        this.currentPlayer = game.getPlayer1();
         this.playerSymbol = game.getCurrentPlayer().equals(game.getPlayer1())
                 ? game.getPlayer1Symbol() : game.getPlayer2Symbol();
         this.opponentSymbol = game.getCurrentPlayer().equals(game.getPlayer1())
@@ -105,10 +113,12 @@ public class onlineGamecontroller implements Initializable {
         });
 
         isPlayerTurn = game.getCurrentPlayer().equals(currentPlayer);
+        System.out.println(currentPlayer);
         System.out.println("Game started successfully. Game ID: " + gameId);
     }
 
-    void initializeGameUI(GameModel game) {
+    void initializeGameUI(GameModel game, String currentPlayer) {
+        this.currentPlayer = currentPlayer;
         labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
         labelPlayerO.setText(game.getPlayer2() + " (" + game.getPlayer2Symbol() + ")");
         labelScoreX.setText("0");
@@ -135,7 +145,7 @@ public class onlineGamecontroller implements Initializable {
                     ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
                     Platform.runLater(() -> handleServerResponse(response));
                 } catch (IOException | JsonSyntaxException ex) {
-                    Platform.runLater(() -> showError("Connection Error",
+                    Platform.runLater(() -> showErrorOnServerClose("Connection Error",
                             "Disconnected from the server: " + ex.getMessage()));
                     break;
                 }
@@ -168,10 +178,14 @@ public class onlineGamecontroller implements Initializable {
                 break;
 
             case "gameOver":
-
-                   showVideoAlert("gameOver", "/assets/bravo.mp4"); 
+                System.out.println("======================================");
+                System.out.println(response.getMessage());
+                System.out.println(response.getData());
+                System.out.println("======================================");
+                   updateScores((Map<String, String>) response.getData(), response.getMessage());
+                   showVideoAlert("gameOver", response.getMessage()); 
                 
-                //handleGameOver(response.getMessage(), winner);
+                   //handleGameOver(response.getMessage(), winner);
                 break;
 
             case "info":
@@ -186,7 +200,9 @@ public class onlineGamecontroller implements Initializable {
             case "error":
                 showError("Server Error", response.getMessage());
                 break;
-
+            case "errorFromServer":
+                showErrorOnServerClose("Server Error", response.getMessage());
+                break;
             case "update":
                 if (response.getData() != null) {
                     try {
@@ -305,6 +321,34 @@ public class onlineGamecontroller implements Initializable {
         alert.setHeaderText(message);
         alert.showAndWait();
     }
+    
+    private void showErrorOnServerClose(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Menu");
+
+            Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
+            currentStage.close();
+
+            stage.show();
+            } catch (IOException ex) {
+                Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
 
     @FXML
     private void handleCellAction(ActionEvent event) {
@@ -374,9 +418,17 @@ public class onlineGamecontroller implements Initializable {
         cell.setGraphic(imageView);
     }
 
-    private void showVideoAlert(String title, String videoPath) {
+    private void showVideoAlert(String title, String winner) {
         try {
-
+            String videoPath;
+            
+            if(winner.equals(currentPlayer + " wins!"))
+                videoPath = "/assets/bravo.mp4";
+            else if (winner.equals("It's a draw!"))
+                videoPath = "/assets/draw.mp4";
+            else
+                videoPath = "/assets/looser.mp4";
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/VideoLayout.fxml"));
 
             Parent root = loader.load();
@@ -397,6 +449,38 @@ public class onlineGamecontroller implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             //showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
+        }
+    }
+    
+    private void updateScores(Map<String, String> data, String winner) {
+        String player1 = data.get("player1");
+        String player2 = data.get("player2");
+        
+        String str = winner;
+        String[] parts = str.split(" ");
+        String winnerName = parts[0];
+        sendScoreToServer(winnerName);
+        
+        if (winner.equals(player1+" wins!")) {
+            scoreX+=10;
+            labelScoreX.setText(String.valueOf(scoreX));
+        } else if (winner.equals(player2+" wins!")) {
+            scoreO+=10;
+            labelScoreO.setText(String.valueOf(scoreO));
+        }
+    }
+    
+    private void sendScoreToServer(String name){
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("name", name);
+            PlayerSocket playerSocket = PlayerSocket.getInstance();
+            DataOutputStream dos = playerSocket.getDataOutputStream();
+            String jsonRequest = new Gson().toJson(new RequsetModel("updateScore", data));
+            dos.writeUTF(jsonRequest);
+            System.out.println("tictactoe.LocalHvsHcontroller.sendScoreToServer()");
+        } catch (IOException ex) {
+            Logger.getLogger(LocalHvsHcontroller.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

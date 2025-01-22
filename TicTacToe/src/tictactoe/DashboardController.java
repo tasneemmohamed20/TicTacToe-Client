@@ -383,7 +383,7 @@ import models.ResponsModel;
                 showAlert("Controller is null!!");
                 return;
             }
-            controller.initializeGameUI(game);
+            controller.initializeGameUI(game, currentName);
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
             stage.setScene(new Scene(root));
