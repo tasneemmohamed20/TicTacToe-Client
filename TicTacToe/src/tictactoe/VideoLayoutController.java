@@ -5,16 +5,24 @@
  */
 package tictactoe;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.stage.Stage;
 
 /**
  * FXML Controller class
@@ -69,8 +77,18 @@ public class VideoLayoutController implements Initializable {
     @FXML
     private void onCloseClicked(ActionEvent event) {
 
-        mediaPlayer.stop();
-        System.exit(0);
+        try {
+            mediaPlayer.stop();
+            ((Button) event.getSource()).getScene().getWindow().hide();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("dashboard.fxml"));
+            Parent levelsRoot = loader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene levelsScene = new Scene(levelsRoot);
+            stage.setScene(levelsScene);
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(VideoLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public void setWinnerText(String text) {

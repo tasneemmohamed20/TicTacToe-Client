@@ -29,6 +29,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import models.GameModel;
+import models.GameRecord;
+import models.Move;
 import models.RequsetModel;
 import models.ResponsModel;
 import theGame.XO;
@@ -61,13 +63,19 @@ public class onlineGamecontroller implements Initializable {
     private String gameId;
 
     private GameModel gameData;
+    GameRecord record;
+    boolean isRecording = false;
 
     private final Image xImage = new Image("/assets/x.png");
     private final Image oImage = new Image("/assets/o.png");
 
     private int scoreX = 0;
     private int scoreO = 0;
-    
+    String userName;
+     public void setName(String name) {
+        userName = name;
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         try {
@@ -232,6 +240,12 @@ public class onlineGamecontroller implements Initializable {
                                         }
                                         cell.setDisable(true);
                                     }
+                                    if (isRecording) {
+                                        record.saveMove(new Move(boardState[i], cellId));
+                                       
+
+                                    }
+
                                 }
                             }
 
@@ -332,12 +346,12 @@ public class onlineGamecontroller implements Initializable {
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("dashboard.fxml"));
             Parent root = loader.load();
 
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
-            stage.setTitle("Menu");
+            stage.setTitle("Dashboard");
 
             Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
             currentStage.close();
@@ -483,4 +497,21 @@ public class onlineGamecontroller implements Initializable {
             Logger.getLogger(LocalHvsHcontroller.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    @FXML
+    private void handleRecordButton(ActionEvent event) {
+        if (!isRecording) {
+            //  record.saveRecordName("rec.txt");
+
+            isRecording = true;
+            record = new GameRecord(userName + ".txt");
+            record.saveRecordName();
+            recordGame.setText("Stop Recording");
+
+        } else {
+            isRecording = false;
+            recordGame.setText("Start Recording");
+            System.out.println("Recording Stopped Game recording has been stopped.");
+        }
+    }
+
 }
