@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -120,13 +121,12 @@ import models.ResponsModel;
                         break;
                     };
 
-                    if (isRefOn) {
-                        isRefOn = false;
+                   
                         String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
 
                         dos.writeUTF(jsonRequest);
                         dos.flush();
-                    }
+                    
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
@@ -200,7 +200,12 @@ import models.ResponsModel;
 
     public void displayOnlineUsers(List<String> users) {
         Platform.runLater(() -> {
-            ObservableList<String> observableList = FXCollections.observableArrayList(users);
+            List<String> filteredUsers = users.stream()
+                                          .filter(user -> !user.equals(userName))
+                                          .collect(Collectors.toList());
+
+        ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
+
             onlineusers.setCellFactory(lv -> new ListCell<String>() {
                 private final HBox content;
                 private final Label label;
@@ -383,6 +388,7 @@ import models.ResponsModel;
                 showAlert("Controller is null!!");
                 return;
             }
+             controller.setName(userName);
             controller.initializeGameUI(game, currentName);
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
@@ -397,9 +403,21 @@ import models.ResponsModel;
     }
 
     private void cleanupResources() {
-    running = false;
+     running = false; 
     if (t != null && t.isAlive()) {
         t.interrupt();
+    }
+    try {
+        if (dos != null) {
+            Map<String, String> data = new HashMap<>();
+            data.put("username", userName); 
+            String jsonRequest = gson.toJson(new RequsetModel("logout", data));
+            dos.writeUTF(jsonRequest);
+            dos.flush();
+            System.out.println("Logout request sent to server.");
+        }
+    } catch (IOException e) {
+        System.err.println("Error sending logout request: " + e.getMessage());
     }
     try {
         if (dos != null) dos.close();
@@ -407,7 +425,7 @@ import models.ResponsModel;
     } catch (IOException e) {
         System.err.println("Error closing resources: " + e.getMessage());
     }
-    System.out.println("Resources cleaned up, thread stopped.");
+    System.out.println("Resources cleaned up, thread stopped.");
 }
 
     @FXML
@@ -442,4 +460,19 @@ import models.ResponsModel;
         showAlert("Failed to navigate to the login screen. Please try again.");
     }
 }
+     @FXML
+    private void navToRecods(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("AllRecords.fxml"));
+            Parent root = loader.load();
+            AllRecordsController controller = loader.getController();
+            controller.setName(userName);
+            Stage stage = (Stage) onlineusers.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
 }

@@ -1,0 +1,15 @@
+X cell2
+X cell2
+O cell4
+X cell2
+X cell3
+O cell4
+X cell2
+X cell3
+O cell4
+O cell7
+X cell1
+X cell2
+X cell3
+O cell4
+O cell7
