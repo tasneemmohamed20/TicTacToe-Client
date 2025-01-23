@@ -19,14 +19,14 @@
                         <Image url="/assets/tictactoe.png" />
                     </image>
                 </ImageView>
-                <Label fx:id="winnerLabel" alignment="CENTER" layoutX="214.0" layoutY="25.0" style="-fx-font-size: 50px; -fx-font-weight: bold;" text="Winner" textFill="gold" />
+                <Label fx:id="winnerLabel" alignment="CENTER" layoutX="8.0" layoutY="26.0" prefHeight="58.0" prefWidth="587.0" style="-fx-font-size: 40px; -fx-font-weight: bold;" text="Winner" textFill="gold" />
                 <StackPane layoutX="200.0" layoutY="125.0" prefHeight="150.0" prefWidth="200.0">
                     <children>
                         <MediaView fx:id="mediaView" fitHeight="230.0" fitWidth="360.0" />
                     </children>
                 </StackPane>
-            <Button fx:id="newGame" onAction="#onNewGameClicked" layoutX="14.0" layoutY="110.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="120.0" text="New Game" />
-            <Button fx:id="close" onAction="#onCloseClicked" layoutX="14.0" layoutY="169.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="122.0" text="Close" />
+            <Button fx:id="newGame" layoutX="14.0" layoutY="110.0" mnemonicParsing="false" onAction="#onNewGameClicked" prefHeight="31.0" prefWidth="120.0" text="New Game" />
+            <Button fx:id="close" layoutX="14.0" layoutY="169.0" mnemonicParsing="false" onAction="#onCloseClicked" prefHeight="31.0" prefWidth="122.0" text="Close" />
             </children>
         </AnchorPane>
     </center>

@@ -12,16 +12,17 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import javafx.scene.media.MediaView?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="785.0" prefWidth="973.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.onlineGamecontroller">
-   <right>
-      <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game" BorderPane.alignment="CENTER_RIGHT">
-         <BorderPane.margin>
+<right>
+    <VBox alignment="CENTER_RIGHT" spacing="10">
+        <BorderPane.margin>
             <Insets bottom="100.0" right="75.0" top="100.0" />
-         </BorderPane.margin>
-      </Button>
-   </right>
+        </BorderPane.margin>
+        <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record game" />
+        <Button fx:id="withdrawing" mnemonicParsing="false" onAction="#handleWithdarwAction" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Withdraw" />
+    </VBox>
+</right>
    <center>
       <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="350.0" BorderPane.alignment="CENTER">
          <center>
@@ -65,11 +66,11 @@
       </ImageView>
    </bottom>
    <top>
-      <FlowPane maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="350.0" BorderPane.alignment="TOP_CENTER">
+      <FlowPane alignment="CENTER" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="969.0" BorderPane.alignment="TOP_CENTER">
          <children>
-            <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="130.0" style="-fx-background-color: #48D2FE; -fx-background-radius: 15;">
+            <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="200.0" style="-fx-background-color: #48D2FE; -fx-background-radius: 15;">
                <children>
-                  <Label fx:id="labelPlayerX" text="Player X" textAlignment="CENTER">
+                  <Label fx:id="labelPlayerX" alignment="CENTER" contentDisplay="CENTER" prefHeight="32.0" prefWidth="186.0" text="Player X" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="22.0" />
                      </font>
@@ -90,9 +91,9 @@
                   <Insets />
                </FlowPane.margin>
             </VBox>
-            <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="130.0" style="-fx-background-color: #E2BE00; -fx-background-radius: 15;">
+            <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="130.0" prefWidth="200.0" style="-fx-background-color: #E2BE00; -fx-background-radius: 15;">
                <children>
-                  <Label fx:id="labelPlayerO" alignment="TOP_CENTER" text="Player O" textAlignment="CENTER">
+                  <Label fx:id="labelPlayerO" alignment="CENTER" contentDisplay="CENTER" prefHeight="32.0" prefWidth="167.0" text="Player O" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="22.0" />
                      </font>
@@ -100,7 +101,7 @@
                         <Insets left="20.0" top="20.0" />
                      </VBox.margin>
                   </Label>
-                  <Label fx:id="labelScoreO" text="0" textAlignment="CENTER">
+                  <Label fx:id="labelScoreO" alignment="CENTER" contentDisplay="CENTER" prefHeight="32.0" prefWidth="90.0" text="0" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="22.0" />
                      </font>

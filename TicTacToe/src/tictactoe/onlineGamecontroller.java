@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -67,7 +68,7 @@ public class onlineGamecontroller implements Initializable {
 
     private int scoreX = 0;
     private int scoreO = 0;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         try {
@@ -105,8 +106,15 @@ public class onlineGamecontroller implements Initializable {
         this.gameId = game.getGameId();
 
         Platform.runLater(() -> {
-            labelPlayerX.setText(game.getPlayer1());
-            labelPlayerO.setText(game.getPlayer2());
+            // Update player labels with symbol and turn indication
+            labelPlayerX.setText(game.getPlayer1() + " (X)"
+                    + (playerSymbol.equals("X") ? " [You]" : "")
+                    + (isPlayerTurn && playerSymbol.equals("X") ? " (Your Turn)" : ""));
+
+            labelPlayerO.setText(game.getPlayer2() + " (O)"
+                    + (playerSymbol.equals("O") ? " [You]" : "")
+                    + (isPlayerTurn && playerSymbol.equals("O") ? " (Your Turn)" : ""));
+
             labelScoreX.setText("0");
             labelScoreO.setText("0");
             resetBoard();
@@ -117,13 +125,13 @@ public class onlineGamecontroller implements Initializable {
         System.out.println("Game started successfully. Game ID: " + gameId);
     }
 
-    void initializeGameUI(GameModel game, String currentPlayer) {
+    void initializeGameUI(GameModel game, String currentPlayer, Stage stage) {
         this.currentPlayer = currentPlayer;
         labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
         labelPlayerO.setText(game.getPlayer2() + " (" + game.getPlayer2Symbol() + ")");
         labelScoreX.setText("0");
         labelScoreO.setText("0");
-
+        this.gameData = game;
         resetBoard();
 
         String[] board = game.getBoard();
@@ -135,6 +143,20 @@ public class onlineGamecontroller implements Initializable {
                 cell.setDisable(board[i] != null);
             }
         }
+
+        /* stage.setOnCloseRequest((event) -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Do you want to Withdraw?", ButtonType.YES, ButtonType.NO);
+            alert.showAndWait().ifPresent(click -> {
+                if (click == ButtonType.YES) {
+                    sendWithdrawRequest();
+
+                    Platform.exit();
+                } else if (click == ButtonType.NO) {
+                    event.consume();
+                }
+
+            });
+        });*/
     }
 
     private void startServerListener() {
@@ -142,6 +164,7 @@ public class onlineGamecontroller implements Initializable {
             while (true) {
                 try {
                     String responseString = dis.readUTF();
+                    System.out.println("[DEBUG] Received message from server: " + responseString);
                     ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
                     Platform.runLater(() -> handleServerResponse(response));
                 } catch (IOException | JsonSyntaxException ex) {
@@ -182,10 +205,10 @@ public class onlineGamecontroller implements Initializable {
                 System.out.println(response.getMessage());
                 System.out.println(response.getData());
                 System.out.println("======================================");
-                   updateScores((Map<String, String>) response.getData(), response.getMessage());
-                   showVideoAlert("gameOver", response.getMessage()); 
-                
-                   //handleGameOver(response.getMessage(), winner);
+                updateScores((Map<String, String>) response.getData(), response.getMessage());
+                showVideoAlert(response.getMessage(), response.getMessage());
+
+                //handleGameOver(response.getMessage(), winner);
                 break;
 
             case "info":
@@ -193,6 +216,15 @@ public class onlineGamecontroller implements Initializable {
                 Platform.runLater(() -> {
                     if (response.getMessage().contains("Your turn")) {
                         isPlayerTurn = true;
+
+                        // Update labels to show current turn
+                        labelPlayerX.setText(gameData.getPlayer1() + " (X)"
+                                + (playerSymbol.equals("X") ? " [You]" : "")
+                                + (playerSymbol.equals("X") ? " (Your Turn)" : ""));
+
+                        labelPlayerO.setText(gameData.getPlayer2() + " (O)"
+                                + (playerSymbol.equals("O") ? " [You]" : "")
+                                + (playerSymbol.equals("O") ? " (Your Turn)" : ""));
                     }
                 });
                 break;
@@ -204,46 +236,61 @@ public class onlineGamecontroller implements Initializable {
                 showErrorOnServerClose("Server Error", response.getMessage());
                 break;
             case "update":
-                if (response.getData() != null) {
-                    try {
-                        Map<String, Object> updateData = gson.fromJson(
-                                gson.toJson(response.getData()),
-                                new TypeToken<Map<String, Object>>() {
-                                }.getType()
-                        );
+            if (response.getData() != null) {
+                try {
+                    Map<String, Object> updateData = gson.fromJson(
+                            gson.toJson(response.getData()),
+                            new TypeToken<Map<String, Object>>() {
+                            }.getType()
+                    );
 
-                        String[] boardState = gson.fromJson(
-                                gson.toJson(updateData.get("board")),
-                                String[].class
-                        );
-                        String currentTurn = (String) updateData.get("currentTurn");
+                    String[] boardState = gson.fromJson(
+                            gson.toJson(updateData.get("board")),
+                            String[].class
+                    );
+                    String currentTurn = (String) updateData.get("currentTurn");
 
-                       
-                        Platform.runLater(() -> {
-                            for (int i = 0; i < boardState.length; i++) {
-                                if (boardState[i] != null) {
-                                    String cellId = "cell" + (i + 1);
-                                    Button cell = getCellById(cellId);
-                                    if (cell != null) {
-                                        if (boardState[i].equals("X")) {
-                                            setCellImage(cell, xImage);
-                                        } else {
-                                            setCellImage(cell, oImage);
-                                        }
-                                        cell.setDisable(true);
+                    Platform.runLater(() -> {
+                        for (int i = 0; i < boardState.length; i++) {
+                            if (boardState[i] != null) {
+                                String cellId = "cell" + (i + 1);
+                                Button cell = getCellById(cellId);
+                                if (cell != null) {
+                                    if (boardState[i].equals("X")) {
+                                        setCellImage(cell, xImage);
+                                    } else {
+                                        setCellImage(cell, oImage);
                                     }
+                                    cell.setDisable(true);
                                 }
                             }
+                        }
 
-                            isPlayerTurn = currentTurn.equals(playerSymbol);
-                            System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
-                                    + ", Player symbol: " + playerSymbol
-                                    + ", isPlayerTurn: " + isPlayerTurn);
-                        });
-                    } catch (Exception e) {
-                        System.err.println("Error parsing update data: " + e.getMessage());
-                    }
+                        // Update labels to show current turn
+                        labelPlayerX.setText(gameData.getPlayer1() + " (X)" + 
+                            (playerSymbol.equals("X") ? " [You]" : "") + 
+                            (currentTurn.equals("X") ? " (Your Turn)" : ""));
+                        
+                        labelPlayerO.setText(gameData.getPlayer2() + " (O)" + 
+                            (playerSymbol.equals("O") ? " [You]" : "") + 
+                            (currentTurn.equals("O") ? " (Your Turn)" : ""));
+
+                        isPlayerTurn = currentTurn.equals(playerSymbol);
+                        System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
+                                + ", Player symbol: " + playerSymbol
+                                + ", isPlayerTurn: " + isPlayerTurn);
+                    });
+                } catch (Exception e) {
+                    System.err.println("Error parsing update data: " + e.getMessage());
                 }
+            }
+            break;
+            case "withdraw":
+                Platform.runLater(() -> {
+                    //showError(currentPlayer, currentPlayer + " withdrawed");
+                    showVideoAlert(response.getMessage(), "withdraw");
+                    navigateToMenu();
+                });
                 break;
 
             default:
@@ -277,29 +324,27 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void handleGameOver(String resultMessage, String winner) {
-        
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Game Over");
         alert.setHeaderText(resultMessage);
         alert.showAndWait();
 
-       
         if (winner != null) {
             String videoPath = winner.equals(playerSymbol) ? "/assets/bravo.mp4" : "/assets/looser.mp4";
             showVideoAlert(resultMessage, "/assets/bravo.mp4");
         }
 
-        
         resetBoard();
     }
 
     private String determineWinner(String resultMessage) {
         if (resultMessage.contains(playerSymbol)) {
-            return playerSymbol; 
+            return playerSymbol;
         } else if (resultMessage.contains(opponentSymbol)) {
-            return opponentSymbol; 
+            return opponentSymbol;
         } else {
-            return null; 
+            return null;
         }
     }
 
@@ -321,7 +366,7 @@ public class onlineGamecontroller implements Initializable {
         alert.setHeaderText(message);
         alert.showAndWait();
     }
-    
+
     private void showErrorOnServerClose(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -332,48 +377,44 @@ public class onlineGamecontroller implements Initializable {
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
-            Parent root = loader.load();
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+                Parent root = loader.load();
 
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Menu");
+                Stage stage = new Stage();
+                stage.setScene(new Scene(root));
+                stage.setTitle("Menu");
 
-            Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
-            currentStage.close();
+                Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
+                currentStage.close();
 
-            stage.show();
+                stage.show();
             } catch (IOException ex) {
                 Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-
     @FXML
     private void handleCellAction(ActionEvent event) {
         Button clickedCell = (Button) event.getSource();
         String cellId = clickedCell.getId();
 
-     
         if (!isPlayerTurn) {
             showError("Invalid Move", "It's not your turn!");
             return;
         }
 
-       
         if (!clickedCell.getText().isEmpty()) {
             showError("Invalid Move", "This cell is already occupied!");
             return;
         }
 
         try {
-            
+
             Map<String, String> moveData = new HashMap<>();
             moveData.put("cell", cellId);
             moveData.put("symbol", playerSymbol);
 
-            
             if (playerSymbol.equals("X")) {
                 setCellImage(clickedCell, xImage);
             } else {
@@ -384,7 +425,7 @@ public class onlineGamecontroller implements Initializable {
             dos.writeUTF(gson.toJson(request));
             dos.flush();
 
-            isPlayerTurn = false; 
+            isPlayerTurn = false;
         } catch (IOException ex) {
             showError("Connection Error", "Failed to send move to server: " + ex.getMessage());
         }
@@ -400,13 +441,13 @@ public class onlineGamecontroller implements Initializable {
 
         Button targetCell = getCellById(cellId);
         if (targetCell != null) {
-            
+
             if (symbol.equals("X")) {
                 setCellImage(targetCell, xImage);
             } else {
                 setCellImage(targetCell, oImage);
             }
-            targetCell.setDisable(true); 
+            targetCell.setDisable(true);
         }
     }
 
@@ -421,14 +462,17 @@ public class onlineGamecontroller implements Initializable {
     private void showVideoAlert(String title, String winner) {
         try {
             String videoPath;
-            
-            if(winner.equals(currentPlayer + " wins!"))
+
+            if (winner.equals(currentPlayer + " wins!")) {
                 videoPath = "/assets/bravo.mp4";
-            else if (winner.equals("It's a draw!"))
+            } else if (winner.equals("withdraw")) {
+                videoPath = "/assets/bravo.mp4";
+            } else if (winner.equals("It's a draw!")) {
                 videoPath = "/assets/draw.mp4";
-            else
+            } else {
                 videoPath = "/assets/looser.mp4";
-            
+            }
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/VideoLayout.fxml"));
 
             Parent root = loader.load();
@@ -451,26 +495,26 @@ public class onlineGamecontroller implements Initializable {
             //showAlert("Error", "Could not load or play video!", Alert.AlertType.ERROR);
         }
     }
-    
+
     private void updateScores(Map<String, String> data, String winner) {
         String player1 = data.get("player1");
         String player2 = data.get("player2");
-        
+
         String str = winner;
         String[] parts = str.split(" ");
         String winnerName = parts[0];
         sendScoreToServer(winnerName);
-        
-        if (winner.equals(player1+" wins!")) {
-            scoreX+=10;
+
+        if (winner.equals(player1 + " wins!")) {
+            scoreX += 10;
             labelScoreX.setText(String.valueOf(scoreX));
-        } else if (winner.equals(player2+" wins!")) {
-            scoreO+=10;
+        } else if (winner.equals(player2 + " wins!")) {
+            scoreO += 10;
             labelScoreO.setText(String.valueOf(scoreO));
         }
     }
-    
-    private void sendScoreToServer(String name){
+
+    private void sendScoreToServer(String name) {
         try {
             Map<String, String> data = new HashMap<>();
             data.put("name", name);
@@ -483,4 +527,85 @@ public class onlineGamecontroller implements Initializable {
             Logger.getLogger(LocalHvsHcontroller.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    @FXML
+    private void handleWithdarwAction(ActionEvent event) {
+        
+        if (gameData == null) {
+            showError("Game Error", "Game data is not initialized.");
+            return;
+        }
+
+       
+        String currentTurnPlayer = gameData.getCurrentPlayer();
+
+       
+        if (currentTurnPlayer == null || currentPlayer == null) {
+            showError("Turn Error", "Unable to determine current turn.");
+            return;
+        }
+
+        
+        if (!currentPlayer.equals(currentTurnPlayer)) {
+            showError("Wait Your Turn", "You can only withdraw during your turn.");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Withdraw Confirmation");
+        alert.setHeaderText("Are you sure you want to withdraw?");
+        alert.setContentText("This action cannot be undone.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            sendWithdrawRequest();
+        }
+    }
+
+    private void sendWithdrawRequest() {
+        try {
+
+            Map<String, String> data = new HashMap<>();
+            data.put("player", currentPlayer);
+            data.put("gameId", gameId);
+
+            RequsetModel request = new RequsetModel("withdraw", data);
+            dos.writeUTF(gson.toJson(request));
+            dos.flush();
+
+            //cleanupResources();
+            Platform.runLater(() -> navigateToMenu());
+        } catch (IOException ex) {
+            showError("Connection Error", "Failed to send quit request: " + ex.getMessage());
+        }
+    }
+
+    private void navigateToMenu() {
+        try {
+            
+            if (labelPlayerX == null || labelPlayerX.getScene() == null) {
+              
+                Stage currentStage = (Stage) labelPlayerO.getScene().getWindow();
+
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
+                Parent root = loader.load();
+
+                currentStage.setScene(new Scene(root));
+                currentStage.show();
+            } else {
+               
+                Stage stage = (Stage) labelPlayerX.getScene().getWindow();
+
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
+                Parent root = loader.load();
+
+                stage.setScene(new Scene(root));
+                stage.show();
+            }
+        } catch (Exception ex) {
+            
+            showError("Navigation Error", "Failed to navigate to the menu: " + ex.getMessage());
+        }
+    }
+
 }

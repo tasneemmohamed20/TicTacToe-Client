@@ -36,7 +36,7 @@ import models.GameModel;
 import models.RequsetModel;
 import models.ResponsModel;
 
-  public class DashboardController implements Initializable {
+public class DashboardController implements Initializable {
 
     @FXML
     private Button games;
@@ -55,7 +55,7 @@ import models.ResponsModel;
     String currentName;
     DataOutputStream dos;
     DataInputStream dis;
-    
+
     public void setScore(String playerscore) {
         userScore = playerscore;
         if (userScore != null) {
@@ -108,7 +108,6 @@ import models.ResponsModel;
     }
     volatile Thread t;
     private volatile boolean running = true;
-    
 
     private void refresh(DataOutputStream dos, DataInputStream dis) {
         t = new Thread(() -> {
@@ -130,10 +129,12 @@ import models.ResponsModel;
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
-                    
-                    if (!running) break;
-                    
-                    System.err.println("!!!!!!!!!!! response of refresh"+res.toString());
+
+                    if (!running) {
+                        break;
+                    }
+
+                    System.err.println("!!!!!!!!!!! response of refresh" + res.toString());
                     switch (res.getStatus()) {
                         case "success":
                             List<String> users = (List<String>) res.getData();
@@ -160,22 +161,22 @@ import models.ResponsModel;
                             Platform.runLater(() -> showAlert(res.getMessage()));
                             break;
                         case "gameStart":
-                            running = false; 
-                           if (t != null && t.isAlive()) {
-                               t.interrupt();
-                           }
+                            running = false;
+                            if (t != null && t.isAlive()) {
+                                t.interrupt();
+                            }
                             stopRefreshThread();
                             System.out.println("Game start received: " + res.getData());
                             GameModel gameData = gson.fromJson(gson.toJson(res.getData()), GameModel.class);
                             Platform.runLater(() -> {
-                                startGame(gameData); 
+                                startGame(gameData);
                                 System.out.println("Refresh thread status: " + (t != null && t.isAlive()));
                             });
                             break;
                         case "info":
                             System.out.println("Info message: " + res.getMessage());
                             break;
-                         case "notAllowed":
+                        case "notAllowed":
                             Platform.runLater(() -> showAlert("You are not allowed to play. Please wait or check eligibility."));
                             break;
                         default:
@@ -184,13 +185,15 @@ import models.ResponsModel;
                     }
                     Thread.sleep(5000);
                 } catch (IOException ex) {
-                    if (!running) break;
+                    if (!running) {
+                        break;
+                    }
                     Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (InterruptedException ex) {
                     System.out.println("Thread stopped");
                     break;
-                // } finally {
-                //     System.out.println("Refresh thread terminated");
+                    // } finally {
+                    //     System.out.println("Refresh thread terminated");
                 }
             }
         });
@@ -266,14 +269,14 @@ import models.ResponsModel;
     }
 
     private boolean validateGameModel(GameModel game) {
-        System.out.println("!!!!!!"+game.toString());
-        return game != null &&
-            game.getGameId() != null &&
-            game.getPlayer1() != null &&
-            game.getPlayer1Symbol() != null &&
-            game.getPlayer2() != null &&
-            game.getPlayer2Symbol() != null;
-        
+        System.out.println("!!!!!!" + game.toString());
+        return game != null
+                && game.getGameId() != null
+                && game.getPlayer1() != null
+                && game.getPlayer1Symbol() != null
+                && game.getPlayer2() != null
+                && game.getPlayer2Symbol() != null;
+
     }
 
     private void acceptInvite(Object data) {
@@ -282,14 +285,12 @@ import models.ResponsModel;
             dos.writeUTF(jsonRequest);
             dos.flush();
 
-
             System.out.println("Accepted invite, waiting for game to start...");
         } catch (IOException ex) {
             System.err.println("Error accepting invite: " + ex.getMessage());
             showAlert("Failed to accept the invite. Please check your connection.");
         }
     }
-
 
     private void startGame(GameModel game) {
         try {
@@ -305,16 +306,16 @@ import models.ResponsModel;
     }
 
     private synchronized void stopRefreshThread() {
-        running = false; 
-        
+        running = false;
+
         if (t != null) {
             try {
-                t.interrupt(); 
-                t.join(2000); 
-                
+                t.interrupt();
+                t.join(2000);
+
                 if (t.isAlive()) {
                     System.err.println("Thread did not stop within timeout");
-                    t = null; 
+                    t = null;
                 }
 //                if (dis != null) dis.close();
 //                if (dos != null) dos.close();
@@ -324,7 +325,7 @@ import models.ResponsModel;
 //                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
+
         System.out.println("Refresh thread stopped successfully");
     }
 
@@ -368,7 +369,7 @@ import models.ResponsModel;
     }
 
     private void navigateToGame(GameModel game) {
-        System.out.println("SHAKL ELGAMEE F ELNAVIGATE"+game.toString());
+        System.out.println("SHAKL ELGAMEE F ELNAVIGATE" + game.toString());
         try {
             if (!validateGameModel(game)) {
                 showAlert("Invalid game data. Cannot start the game.");
@@ -383,11 +384,13 @@ import models.ResponsModel;
                 showAlert("Controller is null!!");
                 return;
             }
-            controller.initializeGameUI(game, currentName);
+            
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();
+            controller.initializeGameUI(game, currentName,stage);
+            
         } catch (IOException e) {
             System.out.println(game.toString());
             System.out.println(e.toString());
@@ -397,49 +400,52 @@ import models.ResponsModel;
     }
 
     private void cleanupResources() {
-    running = false;
-    if (t != null && t.isAlive()) {
-        t.interrupt();
+        running = false;
+        if (t != null && t.isAlive()) {
+            t.interrupt();
+        }
+        try {
+            if (dos != null) {
+                dos.close();
+            }
+            if (dis != null) {
+                dis.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error closing resources: " + e.getMessage());
+        }
+        System.out.println("Resources cleaned up, thread stopped.");
     }
-    try {
-        if (dos != null) dos.close();
-        if (dis != null) dis.close();
-    } catch (IOException e) {
-        System.err.println("Error closing resources: " + e.getMessage());
-    }
-    System.out.println("Resources cleaned up, thread stopped.");
-}
 
     @FXML
-   private void handleLogout(ActionEvent event) {
-    try {
-        if (dos != null) {
-            Map<String, String> data = new HashMap<>();
-            data.put("username", userName); 
-            String jsonRequest = gson.toJson(new RequsetModel("logout", data));
-            dos.writeUTF(jsonRequest);
-            dos.flush();
-            System.out.println("Logout request sent to server.");
+    private void handleLogout(ActionEvent event) {
+        try {
+            if (dos != null) {
+                Map<String, String> data = new HashMap<>();
+                data.put("username", userName);
+                String jsonRequest = gson.toJson(new RequsetModel("logout", data));
+                dos.writeUTF(jsonRequest);
+                dos.flush();
+                System.out.println("Logout request sent to server.");
+            }
+        } catch (IOException e) {
+            System.err.println("Error sending logout request: " + e.getMessage());
         }
-    } catch (IOException e) {
-        System.err.println("Error sending logout request: " + e.getMessage());
+        cleanupResources();
+        navigateToLoginScreen();
     }
-    cleanupResources();
-    navigateToLoginScreen();
-}
-
 
     private void navigateToLoginScreen() {
-    try {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Login.fxml")); 
-        Parent root = loader.load();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Login.fxml"));
+            Parent root = loader.load();
 
-        Stage stage = (Stage) logout.getScene().getWindow(); 
-        stage.setScene(new Scene(root)); 
-        stage.show();
-    } catch (IOException e) {
-        System.err.println("Error loading login screen: " + e.getMessage());
-        showAlert("Failed to navigate to the login screen. Please try again.");
+            Stage stage = (Stage) logout.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading login screen: " + e.getMessage());
+            showAlert("Failed to navigate to the login screen. Please try again.");
+        }
     }
-}
 }

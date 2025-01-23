@@ -6,9 +6,12 @@
 package tictactoe;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
 /**
@@ -25,6 +28,18 @@ public class TicTacToe extends Application {
         
         stage.setScene(scene);
         stage.show();
+        stage.setOnCloseRequest((event) -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Do you want to close the client?", ButtonType.YES,ButtonType.NO);
+            alert.showAndWait().ifPresent(click->{
+                if (click == ButtonType.YES) {
+                
+                Platform.exit();
+                } else if (click == ButtonType.NO) {
+                    event.consume(); 
+                }
+                
+            });
+        });
     }
 
     /**
