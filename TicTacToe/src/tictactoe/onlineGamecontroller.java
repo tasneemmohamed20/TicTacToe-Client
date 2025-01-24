@@ -135,6 +135,7 @@ public class onlineGamecontroller implements Initializable {
 
     void initializeGameUI(GameModel game, String currentPlayer, Stage stage) {
         this.currentPlayer = currentPlayer;
+        System.out.println("initializeGameUI currentPlayer" + currentPlayer);
         labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
         labelPlayerO.setText(game.getPlayer2() + " (" + game.getPlayer2Symbol() + ")");
         labelScoreX.setText("0");
@@ -189,6 +190,13 @@ public class onlineGamecontroller implements Initializable {
             System.out.println("Received an empty or null response.");
             return;
         }
+        
+            if (response.getData() != null) {
+                
+                gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
+                System.out.println("gameData : "+gameData.getCurrentPlayer());
+            }
+        
 
         switch (response.getStatus()) {
             case "gameStart":
@@ -549,6 +557,7 @@ public class onlineGamecontroller implements Initializable {
         }
 
         String currentTurnPlayer = gameData.getCurrentPlayer();
+        System.err.println("currentTurnPlayer : " + currentTurnPlayer);
 
         if (currentTurnPlayer == null || currentPlayer == null) {
             showError("Turn Error", "Unable to determine current turn.");
