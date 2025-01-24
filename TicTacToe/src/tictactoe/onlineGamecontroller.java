@@ -64,6 +64,7 @@ public class onlineGamecontroller implements Initializable {
     private String gameId;
 
     private GameModel gameData;
+    private GameModel gameModel;
     GameRecord record;
     boolean isRecording = false;
     private final Image xImage = new Image("/assets/x.png");
@@ -104,6 +105,10 @@ public class onlineGamecontroller implements Initializable {
     public void startGame(GameModel game) {
         if (game == null) {
             showError("Error", "Game data is null. Cannot start the game.");
+            return;
+        }
+        if (game.getPlayer1() == null || game.getPlayer2() == null) {
+            showError("Error", "Player names are missing.");
             return;
         }
 
@@ -190,13 +195,12 @@ public class onlineGamecontroller implements Initializable {
             System.out.println("Received an empty or null response.");
             return;
         }
-        
-            if (response.getData() != null) {
-                
-                gameData = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
-                System.out.println("gameData : "+gameData.getCurrentPlayer());
-            }
-        
+
+        if (response.getData() != null) {
+
+            gameModel = gson.fromJson(gson.toJson(response.getData()), GameModel.class);
+            System.out.println("gameModel : " + gameModel.getCurrentPlayer());
+        }
 
         switch (response.getStatus()) {
             case "gameStart":
@@ -287,7 +291,7 @@ public class onlineGamecontroller implements Initializable {
                             }
 
                             // Update labels to show current turn
-                            labelPlayerX.setText(gameData.getPlayer1() + " (X)"
+                           /* labelPlayerX.setText(gameData.getPlayer1() + " (X)"
                                     + (playerSymbol.equals("X") ? " [You]" : "")
                                     + (currentTurn.equals("X") ? " (Your Turn)" : ""));
 
@@ -298,7 +302,7 @@ public class onlineGamecontroller implements Initializable {
                             isPlayerTurn = currentTurn.equals(playerSymbol);
                             System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
                                     + ", Player symbol: " + playerSymbol
-                                    + ", isPlayerTurn: " + isPlayerTurn);
+                                    + ", isPlayerTurn: " + isPlayerTurn);*/
                         });
                     } catch (Exception e) {
                         System.err.println("Error parsing update data: " + e.getMessage());
@@ -551,12 +555,12 @@ public class onlineGamecontroller implements Initializable {
     @FXML
     private void handleWithdarwAction(ActionEvent event) {
 
-        if (gameData == null) {
+        if (gameModel == null) {
             showError("Game Error", "Game data is not initialized.");
             return;
         }
 
-        String currentTurnPlayer = gameData.getCurrentPlayer();
+        String currentTurnPlayer = gameModel.getCurrentPlayer();
         System.err.println("currentTurnPlayer : " + currentTurnPlayer);
 
         if (currentTurnPlayer == null || currentPlayer == null) {
