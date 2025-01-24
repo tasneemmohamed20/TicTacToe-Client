@@ -465,7 +465,6 @@ public class onlineGamecontroller implements Initializable {
 
         Button targetCell = getCellById(cellId);
         if (targetCell != null) {
-
             if (symbol.equals("X")) {
                 setCellImage(targetCell, xImage);
             } else {
