@@ -19,7 +19,7 @@
         <BorderPane.margin>
             <Insets bottom="100.0" right="75.0" top="100.0" />
         </BorderPane.margin>
-        <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record game" />
+        <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record game" onAction="#handleRecordButton"/>
         <Button fx:id="withdrawing" mnemonicParsing="false" onAction="#handleWithdarwAction" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Withdraw" />
     </VBox>
 </right>

@@ -30,6 +30,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import models.GameModel;
+import models.GameRecord;
+import models.Move;
 import models.RequsetModel;
 import models.ResponsModel;
 import theGame.XO;
@@ -62,12 +64,18 @@ public class onlineGamecontroller implements Initializable {
     private String gameId;
 
     private GameModel gameData;
-
+    GameRecord record;
+    boolean isRecording = false;
     private final Image xImage = new Image("/assets/x.png");
     private final Image oImage = new Image("/assets/o.png");
 
     private int scoreX = 0;
     private int scoreO = 0;
+    String userName;
+
+    public void setName(String name) {
+        userName = name;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -236,55 +244,59 @@ public class onlineGamecontroller implements Initializable {
                 showErrorOnServerClose("Server Error", response.getMessage());
                 break;
             case "update":
-            if (response.getData() != null) {
-                try {
-                    Map<String, Object> updateData = gson.fromJson(
-                            gson.toJson(response.getData()),
-                            new TypeToken<Map<String, Object>>() {
-                            }.getType()
-                    );
+                if (response.getData() != null) {
+                    try {
+                        Map<String, Object> updateData = gson.fromJson(
+                                gson.toJson(response.getData()),
+                                new TypeToken<Map<String, Object>>() {
+                                }.getType()
+                        );
 
-                    String[] boardState = gson.fromJson(
-                            gson.toJson(updateData.get("board")),
-                            String[].class
-                    );
-                    String currentTurn = (String) updateData.get("currentTurn");
+                        String[] boardState = gson.fromJson(
+                                gson.toJson(updateData.get("board")),
+                                String[].class
+                        );
+                        String currentTurn = (String) updateData.get("currentTurn");
 
-                    Platform.runLater(() -> {
-                        for (int i = 0; i < boardState.length; i++) {
-                            if (boardState[i] != null) {
-                                String cellId = "cell" + (i + 1);
-                                Button cell = getCellById(cellId);
-                                if (cell != null) {
-                                    if (boardState[i].equals("X")) {
-                                        setCellImage(cell, xImage);
-                                    } else {
-                                        setCellImage(cell, oImage);
+                        Platform.runLater(() -> {
+                            for (int i = 0; i < boardState.length; i++) {
+                                if (boardState[i] != null) {
+                                    String cellId = "cell" + (i + 1);
+                                    Button cell = getCellById(cellId);
+                                    if (cell != null) {
+                                        if (boardState[i].equals("X")) {
+                                            setCellImage(cell, xImage);
+                                        } else {
+                                            setCellImage(cell, oImage);
+                                        }
+                                        cell.setDisable(true);
                                     }
-                                    cell.setDisable(true);
+                                    if (isRecording) {
+                                        record.saveMove(new Move(boardState[i], cellId));
+
+                                    }
                                 }
                             }
-                        }
 
-                        // Update labels to show current turn
-                        labelPlayerX.setText(gameData.getPlayer1() + " (X)" + 
-                            (playerSymbol.equals("X") ? " [You]" : "") + 
-                            (currentTurn.equals("X") ? " (Your Turn)" : ""));
-                        
-                        labelPlayerO.setText(gameData.getPlayer2() + " (O)" + 
-                            (playerSymbol.equals("O") ? " [You]" : "") + 
-                            (currentTurn.equals("O") ? " (Your Turn)" : ""));
+                            // Update labels to show current turn
+                            labelPlayerX.setText(gameData.getPlayer1() + " (X)"
+                                    + (playerSymbol.equals("X") ? " [You]" : "")
+                                    + (currentTurn.equals("X") ? " (Your Turn)" : ""));
 
-                        isPlayerTurn = currentTurn.equals(playerSymbol);
-                        System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
-                                + ", Player symbol: " + playerSymbol
-                                + ", isPlayerTurn: " + isPlayerTurn);
-                    });
-                } catch (Exception e) {
-                    System.err.println("Error parsing update data: " + e.getMessage());
+                            labelPlayerO.setText(gameData.getPlayer2() + " (O)"
+                                    + (playerSymbol.equals("O") ? " [You]" : "")
+                                    + (currentTurn.equals("O") ? " (Your Turn)" : ""));
+
+                            isPlayerTurn = currentTurn.equals(playerSymbol);
+                            System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
+                                    + ", Player symbol: " + playerSymbol
+                                    + ", isPlayerTurn: " + isPlayerTurn);
+                        });
+                    } catch (Exception e) {
+                        System.err.println("Error parsing update data: " + e.getMessage());
+                    }
                 }
-            }
-            break;
+                break;
             case "withdraw":
                 Platform.runLater(() -> {
                     //showError(currentPlayer, currentPlayer + " withdrawed");
@@ -377,12 +389,12 @@ public class onlineGamecontroller implements Initializable {
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("dashboard.fxml"));
                 Parent root = loader.load();
 
                 Stage stage = new Stage();
                 stage.setScene(new Scene(root));
-                stage.setTitle("Menu");
+                stage.setTitle("Dashboard");
 
                 Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
                 currentStage.close();
@@ -530,22 +542,19 @@ public class onlineGamecontroller implements Initializable {
 
     @FXML
     private void handleWithdarwAction(ActionEvent event) {
-        
+
         if (gameData == null) {
             showError("Game Error", "Game data is not initialized.");
             return;
         }
 
-       
         String currentTurnPlayer = gameData.getCurrentPlayer();
 
-       
         if (currentTurnPlayer == null || currentPlayer == null) {
             showError("Turn Error", "Unable to determine current turn.");
             return;
         }
 
-        
         if (!currentPlayer.equals(currentTurnPlayer)) {
             showError("Wait Your Turn", "You can only withdraw during your turn.");
             return;
@@ -582,9 +591,9 @@ public class onlineGamecontroller implements Initializable {
 
     private void navigateToMenu() {
         try {
-            
+
             if (labelPlayerX == null || labelPlayerX.getScene() == null) {
-              
+
                 Stage currentStage = (Stage) labelPlayerO.getScene().getWindow();
 
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
@@ -593,7 +602,7 @@ public class onlineGamecontroller implements Initializable {
                 currentStage.setScene(new Scene(root));
                 currentStage.show();
             } else {
-               
+
                 Stage stage = (Stage) labelPlayerX.getScene().getWindow();
 
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
@@ -603,8 +612,25 @@ public class onlineGamecontroller implements Initializable {
                 stage.show();
             }
         } catch (Exception ex) {
-            
+
             showError("Navigation Error", "Failed to navigate to the menu: " + ex.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleRecordButton(ActionEvent event) {
+        if (!isRecording) {
+            //  record.saveRecordName("rec.txt");
+
+            isRecording = true;
+            record = new GameRecord(userName + ".txt");
+            record.saveRecordName();
+            recordGame.setText("Stop Recording");
+
+        } else {
+            isRecording = false;
+            recordGame.setText("Start Recording");
+            System.out.println("Recording Stopped Game recording has been stopped.");
         }
     }
 

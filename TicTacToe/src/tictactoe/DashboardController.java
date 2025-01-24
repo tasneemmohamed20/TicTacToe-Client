@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -119,13 +120,16 @@ public class DashboardController implements Initializable {
                         break;
                     };
 
-                    if (isRefOn) {
+                    /* if (isRefOn) {
                         isRefOn = false;
                         String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
 
                         dos.writeUTF(jsonRequest);
                         dos.flush();
-                    }
+                    }*/
+                    String jsonRequest = gson.toJson(new RequsetModel("fetchOnline", null));
+                    dos.writeUTF(jsonRequest);
+                    dos.flush();
 
                     String responseOnlineUsers = dis.readUTF();
                     ResponsModel res = gson.fromJson(responseOnlineUsers, ResponsModel.class);
@@ -203,7 +207,11 @@ public class DashboardController implements Initializable {
 
     public void displayOnlineUsers(List<String> users) {
         Platform.runLater(() -> {
-            ObservableList<String> observableList = FXCollections.observableArrayList(users);
+            List<String> filteredUsers = users.stream()
+                    .filter(user -> !user.equals(userName))
+                    .collect(Collectors.toList());
+
+            ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
             onlineusers.setCellFactory(lv -> new ListCell<String>() {
                 private final HBox content;
                 private final Label label;
@@ -384,13 +392,13 @@ public class DashboardController implements Initializable {
                 showAlert("Controller is null!!");
                 return;
             }
-            
 
             Stage stage = (Stage) onlineusers.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();
-            controller.initializeGameUI(game, currentName,stage);
-            
+            controller.setName(userName);
+            controller.initializeGameUI(game, currentName, stage);
+
         } catch (IOException e) {
             System.out.println(game.toString());
             System.out.println(e.toString());
@@ -403,6 +411,18 @@ public class DashboardController implements Initializable {
         running = false;
         if (t != null && t.isAlive()) {
             t.interrupt();
+        }
+        try {
+            if (dos != null) {
+                Map<String, String> data = new HashMap<>();
+                data.put("username", userName);
+                String jsonRequest = gson.toJson(new RequsetModel("logout", data));
+                dos.writeUTF(jsonRequest);
+                dos.flush();
+                System.out.println("Logout request sent to server.");
+            }
+        } catch (IOException e) {
+            System.err.println("Error sending logout request: " + e.getMessage());
         }
         try {
             if (dos != null) {
@@ -446,6 +466,21 @@ public class DashboardController implements Initializable {
         } catch (IOException e) {
             System.err.println("Error loading login screen: " + e.getMessage());
             showAlert("Failed to navigate to the login screen. Please try again.");
+        }
+    }
+
+    @FXML
+    private void navToRecods(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("AllRecords.fxml"));
+            Parent root = loader.load();
+            AllRecordsController controller = loader.getController();
+            controller.setName(userName);
+            Stage stage = (Stage) onlineusers.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
