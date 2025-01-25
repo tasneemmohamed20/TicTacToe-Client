@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
@@ -11,32 +12,38 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="458.0" prefWidth="600.0" style="-fx-background-color: #3b0152;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LoginController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="813.0" prefWidth="1260.0" style="-fx-background-color: #3b0152;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LoginController">
    <center>
-      <AnchorPane prefHeight="161.0" prefWidth="522.0" BorderPane.alignment="CENTER">
+      <AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="161.0" prefWidth="522.0" BorderPane.alignment="CENTER">
          <children>
-            <AnchorPane layoutX="168.0" layoutY="37.0" prefHeight="341.0" prefWidth="270.0" style="-fx-background-color: #2B0040; -fx-background-radius: 8px;">
+            <AnchorPane layoutX="374.0" layoutY="46.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="668.0" prefWidth="512.0" style="-fx-background-color: #2B0040; -fx-background-radius: 8px;">
                <children>
-                  <VBox alignment="CENTER" layoutY="42.0" prefHeight="258.0" prefWidth="293.0" spacing="20.0" AnchorPane.bottomAnchor="41.0" AnchorPane.leftAnchor="35.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="42.0">
+                  <VBox alignment="CENTER" layoutX="51.0" layoutY="-1.0" prefHeight="610.0" prefWidth="426.0" spacing="20.0" AnchorPane.bottomAnchor="59.0" AnchorPane.leftAnchor="35.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="-1.0">
                      <children>
-                        <Label style="-fx-font-size: 24px; -fx-font-family: 'Arial Rounded MT Bold'; -fx-text-fill: #ffcc00;" text="Login" />
+                        <Label maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="106.0" prefWidth="144.0" style="-fx-font-size: 50; -fx-font-family: 'Arial Rounded MT Bold'; -fx-text-fill: #ffcc00;" text="Login" textAlignment="RIGHT">
+                           <VBox.margin>
+                              <Insets bottom="100.0" top="50.0" />
+                           </VBox.margin></Label>
                         
-                        <TextField fx:id="usernameTF" promptText="Enter your username" style="-fx-pref-width: 300px; -fx-pref-height: 40px; -fx-font-size: 14px; -fx-background-color: white; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px;" />
-                        <PasswordField fx:id="passTF" promptText="Enter your password" style="-fx-pref-width: 300px; -fx-pref-height: 40px; -fx-font-size: 14px; -fx-background-color: white; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px;" />
+                              <TextField fx:id="usernameTF" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="411.0" promptText="Enter your username" style="-fx-pref-width: 300px; -fx-pref-height: 40px; -fx-font-size: 14px; -fx-background-color: white; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px;" />
+                        <PasswordField fx:id="passTF" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" promptText="Enter your password" style="-fx-pref-width: 300px; -fx-pref-height: 40px; -fx-font-size: 14px; -fx-background-color: white; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px;" />
                         
-                        <VBox alignment="CENTER" spacing="10.0">
+                              <VBox alignment="CENTER" spacing="10.0">
                            <children>
-                              <Button fx:id="loginBTN" onAction="#handleLogin" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Login" />
-                              <Button fx:id="signupNav" onAction="#handleSignupNavigation" style="-fx-pref-width: 200px; -fx-pref-height: 40px; -fx-background-color: transparent; -fx-text-fill: #ffcc00; -fx-font-size: 14px; -fx-border-color: #ffcc00; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Don't have an account? Sign up" />
+                              <Button fx:id="loginBTN" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleLogin" prefWidth="250.0" style="-fx-pref-width: 240px; -fx-pref-height: 40px; -fx-background-color: #ffcc00; -fx-text-fill: #3b0152; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Login" />
+                              <Button fx:id="signupNav" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleSignupNavigation" prefWidth="225.0" style="-fx-pref-width: 240px; -fx-pref-height: 40px; -fx-background-color: transparent; -fx-text-fill: #ffcc00; -fx-font-size: 14px; -fx-border-color: #ffcc00; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Don't have an account? Sign up" />
                            </children>
+                           <VBox.margin>
+                              <Insets top="50.0" />
+                           </VBox.margin>
                         </VBox>
                      </children>
                   </VBox>
                </children>
             </AnchorPane>
-            <ImageView fitHeight="158.0" fitWidth="154.0" layoutX="-8.0" layoutY="242.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="345.0" fitWidth="300.0" layoutY="420.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../images/img.png" />
+                  <Image url="@../assets/tictactoe.png" />
                </image>
             </ImageView>
          </children>
@@ -49,7 +56,7 @@
             <graphic>
                 <ImageView fitHeight="40.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true">
                     <image>
-                        <Image url="@/assets/back-arrow.png" />
+                        <Image url="@../assets/back-arrow.png" />
                     </image>
                 </ImageView>
             </graphic>

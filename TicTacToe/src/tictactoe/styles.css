@@ -9,7 +9,7 @@
 }
 
 .input {
-    -fx-pref-width: 300px;
+    -fx-pref-width: 250px;
     -fx-pref-height: 40px;
     -fx-font-size: 14px;
     -fx-border-radius: 5px;
@@ -20,8 +20,8 @@
 }
 
 .primary-button {
-    -fx-pref-width: 200px;
-    -fx-pref-height: 40px;
+    /*-fx-pref-width: 230px;*/
+    /*-fx-pref-height: 40px;*/
     -fx-background-color: #ffcc00;
     -fx-text-fill: #3b0152; 
     -fx-font-size: 14px;

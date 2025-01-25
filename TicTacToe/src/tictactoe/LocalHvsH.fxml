@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="876.0" prefWidth="970.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LocalHvsHcontroller">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="813.0" prefWidth="1250.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LocalHvsHcontroller">
    <center>
       <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="350.0" BorderPane.alignment="CENTER">
          <center>
@@ -50,9 +50,9 @@
       </BorderPane>
    </center>
    <bottom>
-      <ImageView fitHeight="295.0" fitWidth="277.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="BOTTOM_LEFT">
+      <ImageView fitHeight="345.0" fitWidth="300.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="BOTTOM_LEFT">
          <image>
-            <Image url="/assets/tictactoe.png" />
+            <Image url="@../assets/tictactoe.png" />
          </image>
       </ImageView>
    </bottom>
@@ -115,15 +115,15 @@
    <right>
       <VBox prefHeight="242.0" prefWidth="167.0" BorderPane.alignment="CENTER">
          <BorderPane.margin>
-            <Insets bottom="100.0" right="75.0" top="100.0" />
+            <Insets bottom="100.0" right="75.0" top="300.0" />
          </BorderPane.margin>
          <children>
-            <Button fx:id="recordGame" mnemonicParsing="false" prefHeight="60.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game">
+            <Button fx:id="recordGame" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="60.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Record  game">
                <VBox.margin>
                   <Insets bottom="10.0" left="20.0" right="20.0" top="50.0" />
                </VBox.margin>
             </Button>
-            <Button fx:id="backButton" mnemonicParsing="false" onAction="#handleBackButton" prefHeight="40.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Back To Menu">
+            <Button fx:id="backButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBackButton" prefHeight="60.0" prefWidth="131.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Back To Menu">
                <VBox.margin>
                   <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                </VBox.margin>
