@@ -80,7 +80,11 @@ public class DashboardController implements Initializable {
             refresh(dos, dis);
 
             Platform.runLater(() -> {
-                score.getScene().getWindow().setOnCloseRequest(event -> cleanupResources());
+                if (score != null && score.getScene() != null) {
+                    score.getScene().getWindow().setOnCloseRequest(event -> cleanupResources());
+                } else {
+                    System.err.println("Score or its scene is not initialized.");
+                }
             });
         } catch (IOException ex) {
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
@@ -207,44 +211,59 @@ public class DashboardController implements Initializable {
 
     public void displayOnlineUsers(List<String> users) {
         Platform.runLater(() -> {
-            List<String> filteredUsers = users.stream()
-                    .filter(user -> !user.equals(userName))
-                    .collect(Collectors.toList());
-
-            ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
-            onlineusers.setCellFactory(lv -> new ListCell<String>() {
-                private final HBox content;
-                private final Label label;
-                private final Button inviteButton;
-
-                {
-                    label = new Label();
-                    inviteButton = new Button("Invite");
-
-                    inviteButton.setOnAction(event -> {
-                        invitedUser = getItem();
-                        sendInvite(currentName, invitedUser);
-                        inviteButton.setText("invited");
-                    });
-
-                    content = new HBox(20, label, inviteButton);
+            try {
+                if (users == null) {
+                    System.err.println("Users list is null.");
+                    return;
                 }
 
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setGraphic(null);
-                    } else if (item.equals(userName)) {
-                        setGraphic(null);
-                    } else {
-                        label.setText(item);
-                        inviteButton.setDisable(isInvited[0]);
-                        setGraphic(content);
+                if (userName == null) {
+                    System.err.println("Username is null.");
+                    return;
+                }
+
+                List<String> filteredUsers = users.stream()
+                        .filter(user -> user != null && !user.equals(userName))
+                        .collect(Collectors.toList());
+
+                ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
+                onlineusers.setCellFactory(lv -> new ListCell<String>() {
+                    private final HBox content;
+                    private final Label label;
+                    private final Button inviteButton;
+
+                    {
+                        label = new Label();
+                        inviteButton = new Button("Invite");
+
+                        inviteButton.setOnAction(event -> {
+                            invitedUser = getItem();
+                            sendInvite(currentName, invitedUser);
+                            inviteButton.setText("invited");
+                        });
+
+                        content = new HBox(20, label, inviteButton);
                     }
-                }
-            });
-            onlineusers.setItems(observableList);
+
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setGraphic(null);
+                        } else if (item.equals(userName)) {
+                            setGraphic(null);
+                        } else {
+                            label.setText(item);
+                            inviteButton.setDisable(isInvited[0]);
+                            setGraphic(content);
+                        }
+                    }
+                });
+                onlineusers.setItems(observableList);
+            } catch (Exception ex) {
+                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error in displayOnlineUsers", ex);
+                ex.printStackTrace();
+            }
         });
     }
 

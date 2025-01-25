@@ -65,7 +65,7 @@ public class LoginController {
                 FXMLLoader loader = navigateToScreen(event, "dashboard.fxml", "Dashboard");
                 DashboardController dashboardController = loader.getController();
                 dashboardController.setScore(data.getScore());
-                 dashboardController.setName(data.getUserName());
+                dashboardController.setName(data.getUserName());
             } else {
                 showAlert(Alert.AlertType.ERROR, "Login Failed", response.getMessage());
             }

@@ -73,6 +73,8 @@ public class onlineGamecontroller implements Initializable {
     private int scoreX = 0;
     private int scoreO = 0;
     String userName;
+    private Thread t;
+    private boolean running = true;
 
     public void setName(String name) {
         userName = name;
@@ -170,8 +172,8 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void startServerListener() {
-        new Thread(() -> {
-            while (true) {
+        t = new Thread(() -> {
+            while (running) {
                 try {
                     String responseString = dis.readUTF();
                     System.out.println("[DEBUG] Received message from server: " + responseString);
@@ -183,7 +185,8 @@ public class onlineGamecontroller implements Initializable {
                     break;
                 }
             }
-        }).start();
+        });
+        t.start();
     }
 
     private void handleServerResponse(ResponsModel response) {
@@ -283,7 +286,7 @@ public class onlineGamecontroller implements Initializable {
                             }
 
                             // Update labels to show current turn
-                           /* labelPlayerX.setText(gameData.getPlayer1() + " (X)"
+                            /* labelPlayerX.setText(gameData.getPlayer1() + " (X)"
                                     + (playerSymbol.equals("X") ? " [You]" : "")
                                     + (currentTurn.equals("X") ? " (Your Turn)" : ""));
 
@@ -384,30 +387,44 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void showErrorOnServerClose(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        Platform.runLater(() -> {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("dashboard.fxml"));
-                Parent root = loader.load();
+                if (labelPlayerX == null || labelPlayerX.getScene() == null) {
+                    System.err.println("UI elements are not initialized.");
+                    return;
+                }
 
-                Stage stage = new Stage();
-                stage.setScene(new Scene(root));
-                stage.setTitle("Dashboard");
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle(title);
+                alert.setHeaderText(null);
+                alert.setContentText(message);
 
-                Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
-                currentStage.close();
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+                        Parent root = loader.load();
 
-                stage.show();
-            } catch (IOException ex) {
-                Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, null, ex);
+                        DashboardController dashboardController = loader.getController();
+                        dashboardController.setName(userName);
+                        dashboardController.setScore(String.valueOf(scoreX));
+
+                        Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
+                        currentStage.close();
+
+                        Stage stage = new Stage();
+                        stage.setScene(new Scene(root));
+                        stage.setTitle("Dashboard");
+                        stage.show();
+                    } catch (IOException ex) {
+                        Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(onlineGamecontroller.class.getName()).log(Level.SEVERE, "Error in showErrorOnServerClose", ex);
+                ex.printStackTrace();
             }
-        }
+        });
     }
 
     @FXML
@@ -594,30 +611,62 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void navigateToMenu() {
-        try {
+        // Stop any running threads
+        stopRefreshThread();
 
-            if (labelPlayerX == null || labelPlayerX.getScene() == null) {
+        Platform.runLater(() -> {
+            try {
+                // Close current socket connections
+                cleanupResources();
 
-                Stage currentStage = (Stage) labelPlayerO.getScene().getWindow();
-
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
                 Parent root = loader.load();
 
-                currentStage.setScene(new Scene(root));
+                DashboardController dashboardController = loader.getController();
+                dashboardController.setName(userName);
+                dashboardController.setScore(String.valueOf(scoreX));
+
+                Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
+
+                // Ensure scene creation on JavaFX thread
+                Scene scene = new Scene(root);
+                currentStage.setScene(scene);
+                currentStage.centerOnScreen();
                 currentStage.show();
-            } else {
 
-                Stage stage = (Stage) labelPlayerX.getScene().getWindow();
-
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/Menu.fxml"));
-                Parent root = loader.load();
-
-                stage.setScene(new Scene(root));
-                stage.show();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                showError("Navigation Error", "Failed to navigate to dashboard: " + ex.getMessage());
             }
-        } catch (Exception ex) {
+        });
+    }
 
-            showError("Navigation Error", "Failed to navigate to the menu: " + ex.getMessage());
+    private void cleanupResources() {
+        try {
+            // Close socket connections
+            if (dos != null) {
+                dos.close();
+            }
+            if (dis != null) {
+                dis.close();
+            }
+
+            // Stop any running threads
+            stopRefreshThread();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private synchronized void stopRefreshThread() {
+        running = false;
+        if (t != null) {
+            t.interrupt();
+            try {
+                t.join(2000); // Wait for thread to terminate
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
