@@ -120,13 +120,9 @@ public class onlineGamecontroller implements Initializable {
 
         Platform.runLater(() -> {
             // Update player labels with symbol and turn indication
-            labelPlayerX.setText(game.getPlayer1() + " (X)"
-                    + (playerSymbol.equals("X") ? " [You]" : "")
-                    + (isPlayerTurn && playerSymbol.equals("X") ? " (Your Turn)" : ""));
+            labelPlayerX.setText(game.getPlayer1() + " (X)");
 
-            labelPlayerO.setText(game.getPlayer2() + " (O)"
-                    + (playerSymbol.equals("O") ? " [You]" : "")
-                    + (isPlayerTurn && playerSymbol.equals("O") ? " (Your Turn)" : ""));
+            labelPlayerO.setText(game.getPlayer2() + " (O)");
 
             labelScoreX.setText("0");
             labelScoreO.setText("0");
@@ -238,13 +234,9 @@ public class onlineGamecontroller implements Initializable {
                         isPlayerTurn = true;
 
                         // Update labels to show current turn
-                        labelPlayerX.setText(gameData.getPlayer1() + " (X)"
-                                + (playerSymbol.equals("X") ? " [You]" : "")
-                                + (playerSymbol.equals("X") ? " (Your Turn)" : ""));
+                        labelPlayerX.setText(gameData.getPlayer1() + " (X)");
 
-                        labelPlayerO.setText(gameData.getPlayer2() + " (O)"
-                                + (playerSymbol.equals("O") ? " [You]" : "")
-                                + (playerSymbol.equals("O") ? " (Your Turn)" : ""));
+                        labelPlayerO.setText(gameData.getPlayer2() + " (O)");
                     }
                 });
                 break;
