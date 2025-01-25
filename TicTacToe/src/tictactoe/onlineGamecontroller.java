@@ -7,6 +7,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -220,16 +221,36 @@ public class onlineGamecontroller implements Initializable {
                 break;
 
             case "gameOver":
+                /*
                 System.out.println("======================================");
                 System.out.println(response.getMessage());
                 System.out.println(response.getData());
                 System.out.println("======================================");
                 updateScores((Map<String, String>) response.getData(), response.getMessage());
                 showVideoAlert(response.getMessage(), response.getMessage());
+                 System.out.println("Game over: " + response.getMessage());
+                if (response.getData() != null) {
+                    updateScores((Map<String, String>) response.getData(), response.getMessage());
+                }
+                if (gameModel != null) {
+                    highlightWinningLine(gameModel.getWinningLine());
+                }
+                showVideoAlert(response.getMessage(), response.getMessage());
+
 
                 //handleGameOver(response.getMessage(), winner);
                 break;
-
+*/
+                System.out.println("Game over: " + response.getMessage());
+                if (response.getData() != null) {
+                    updateScores((Map<String, String>) response.getData(), response.getMessage());
+                    Map<String, Object> data = (Map<String, Object>) response.getData();
+                    int[] winningIndices = gson.fromJson(gson.toJson(data.get("winningLine")), int[].class);
+                    System.out.println("Highlighting winning line: " + Arrays.toString(winningIndices));
+                    highlightWinningLine(winningIndices);
+                }
+                showVideoAlert(response.getMessage(), response.getMessage());
+                break;
             case "info":
                 System.out.println("Info message: " + response.getMessage());
                 Platform.runLater(() -> {
@@ -686,5 +707,22 @@ public class onlineGamecontroller implements Initializable {
             System.out.println("Recording Stopped Game recording has been stopped.");
         }
     }
+
+   private void highlightWinningLine(int[] winningIndices) {
+    if (winningIndices == null) {
+        System.out.println("No winning line to highlight.");
+        return;
+    }
+
+    for (int index : winningIndices) {
+        String cellId = "cell" + (index + 1);
+        Button cell = getCellById(cellId);
+        if (cell != null) {
+            System.out.println("Highlighting " + cellId);
+            cell.setStyle("-fx-background-color: yellow;");
+        }
+    }
+}
+
 
 }
