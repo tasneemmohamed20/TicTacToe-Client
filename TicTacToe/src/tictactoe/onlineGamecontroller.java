@@ -163,19 +163,19 @@ public class onlineGamecontroller implements Initializable {
             }
         }
 
-        /* stage.setOnCloseRequest((event) -> {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Do you want to Withdraw?", ButtonType.YES, ButtonType.NO);
-            alert.showAndWait().ifPresent(click -> {
-                if (click == ButtonType.YES) {
-                    sendWithdrawRequest();
-
+        stage.setOnCloseRequest(event -> {
+            event.consume(); // Prevent default close
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
+                "Are you sure you want to quit the game?", 
+                ButtonType.YES, ButtonType.NO);
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.YES) {
+                    sendQuitRequest();
+                    endGame();
                     Platform.exit();
-                } else if (click == ButtonType.NO) {
-                    event.consume();
                 }
-
             });
-        });*/
+        });
     }
 
     // private void startServerListener() {
@@ -337,17 +337,83 @@ public class onlineGamecontroller implements Initializable {
                     }
                 }
                 break;
-            case "withdraw":
-                Platform.runLater(() -> {
-                    //showError(currentPlayer, currentPlayer + " withdrawed");
-                    endGame();
-                    showVideoAlert(response.getMessage(), "withdraw");
-                    // navigateToDashboard();
-                });
-                break;
+            // case "withdraw":
+            //     Platform.runLater(() -> {
+            //         //showError(currentPlayer, currentPlayer + " withdrawed");
+            //         endGame();
+            //         showVideoAlert(response.getMessage(), "withdraw");
+            //         // navigateToDashboard();
+            //     });
+            //     break;
 
-            default:
+            case "withdraw":
+            Platform.runLater(() -> {
+                try {
+                    // Debug prints for response data
+                    System.out.println("[DEBUG-QUIT] Raw response data: " + response.getData());
+                    System.out.println("[DEBUG-QUIT] Response data type: " + 
+                        (response.getData() != null ? response.getData().getClass().getName() : "null"));
+                    
+
+                    if (response.getData() == null) {
+                        System.out.println("[DEBUG-QUIT] No data received, using message");
+                        // Extract player name from message
+                        String message = response.getMessage();
+                        String quittingPlayer = message.split(" ")[0]; // "Tasneem withdrawing" -> "Tasneem"
+                        
+                        endGame();
+                        // if (!quittingPlayer.equals(currentPlayer + " wins!")) {
+                            showVideoAlert("You Win!", currentPlayer + " wins!");
+                        // }
+                        // navigateToDashboard();
+                        return;
+                    }
+                    // Convert data to JSON string first for debugging
+                    String jsonData = gson.toJson(response.getData());
+                    System.out.println("[DEBUG-QUIT] JSON string: " + jsonData);
+                    
+                    // Parse the data
+                    String[] quitData = gson.fromJson(jsonData, String[].class);
+                    System.out.println("[DEBUG-QUIT] Parsed quit data: " + Arrays.toString(quitData));
+                    
+                    // Rest of the code...
+                    String quittingPlayer = quitData[0];
+                    endGame();
+                    if (!quittingPlayer.equals(currentPlayer)) {
+                        showVideoAlert("Player Left", "You Win!");
+                    }
+                    navigateToDashboard();
+                    
+                } catch (JsonSyntaxException ex) {
+                    System.err.println("[ERROR-QUIT] Parse error: " + ex.getMessage());
+                    System.err.println("[ERROR-QUIT] Stack trace: ");
+                    ex.printStackTrace();
+                    endGame();
+                    navigateToDashboard();
+                } catch (Exception ex) {
+                    System.err.println("[ERROR-QUIT] Unexpected error: " + ex.getMessage());
+                    ex.printStackTrace();
+                    endGame();
+                    navigateToDashboard();
+                }
+            });
+                break;
+            
+                default:
                 System.out.println("Unknown status in controller: " + response.getStatus());
+        }
+    }
+
+    private void sendQuitRequest() {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("player", currentPlayer);
+            data.put("gameId", gameId);
+            RequsetModel request = new RequsetModel("withdraw", data);
+            dos.writeUTF(gson.toJson(request));
+            dos.flush();
+        } catch (IOException ex) {
+            System.err.println("Failed to send quit request: " + ex.getMessage());
         }
     }
 
@@ -546,29 +612,22 @@ public class onlineGamecontroller implements Initializable {
     //         t = null;
     //     }
     // }
-    public void endGame() {
+    public synchronized void endGame() {
         System.out.println("[DEBUG] Ending game - Current Thread: " + Thread.currentThread().getName());
-        running = false;  // Signal thread to stop
+        running = false;
         
-        if (t != null) {
+        if (t != null && t.isAlive()) {
             try {
                 t.interrupt();
                 System.out.println("[DEBUG] Waiting for game thread to finish");
                 
-                // Increase timeout and add multiple attempts
-                for (int i = 0; i < 3; i++) {
-                    t.join(1000);
-                    if (!t.isAlive()) {
-                        System.out.println("[DEBUG] Game thread terminated successfully");
-                        break;
-                    }
-                    System.out.println("[DEBUG] Attempt " + (i+1) + " to stop thread");
-                }
+                t.join(1000);  // Wait up to 1 second
                 
                 if (t.isAlive()) {
                     System.out.println("[WARNING] Force stopping game thread");
-                    t.stop(); // Force stop as last resort
+                    t.stop();
                 }
+                
             } catch (InterruptedException e) {
                 System.out.println("[ERROR] Thread interruption: " + e.getMessage());
             } finally {
@@ -576,6 +635,7 @@ public class onlineGamecontroller implements Initializable {
             }
         }
     }
+
     private void showVideoAlert(String title, String winner) {
         try {
             endGame();
@@ -765,75 +825,72 @@ public class onlineGamecontroller implements Initializable {
 
      
     private void sendWithdrawRequest() {
-        try {
-            // Send withdraw request first
-            Map<String, String> data = new HashMap<>();
-            data.put("player", currentPlayer);
-            data.put("gameId", gameId);
-            RequsetModel request = new RequsetModel("withdraw", data);
-            dos.writeUTF(gson.toJson(request));
-            dos.flush();
+        // First stop all game threads and cleanup
+        Platform.runLater(() -> {
+            try {
+                // 1. Stop the game thread first
+                endGame();
+                System.out.println("[DEBUG] Game thread stopped successfully");
+                
+                // 2. Send withdraw request
+                Map<String, String> data = new HashMap<>();
+                data.put("player", currentPlayer);
+                data.put("gameId", gameId);
+                RequsetModel request = new RequsetModel("withdraw", data);
+                dos.writeUTF(gson.toJson(request));
+                dos.flush();
+                System.out.println("[DEBUG] Withdraw request sent successfully");
     
-            // Then handle navigation
-            Platform.runLater(() -> {
-                try {
-                    // Load dashboard first
-                    FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
-                    Parent dashRoot = dashLoader.load();
-                    DashboardController dashboardController = dashLoader.getController();
-                    dashboardController.setName(userName);
-                    dashboardController.setScore(String.valueOf(score));
+                // 3. Navigate after small delay to ensure server processes request
+                Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(500); // Small delay to ensure server processes request
+                        navigateToDashboard();
+                    } catch (InterruptedException e) {
+                        System.out.println("[ERROR] Navigation delay interrupted");
+                    }
+                });
     
-                    // End game thread
-                    endGame();
-    
-                    // Get the main stage and set the new scene
-                    Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
-                    mainStage.setScene(new Scene(dashRoot));
-                    mainStage.show();
-    
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    showError("Navigation Error", "Failed to navigate to dashboard");
-                }
-            });
-    
-        } catch (IOException ex) {
-            showError("Connection Error", "Failed to send withdraw request: " + ex.getMessage());
-        }
+            } catch (IOException ex) {
+                System.err.println("[ERROR] Failed to send withdraw request: " + ex.getMessage());
+                showError("Connection Error", "Failed to send withdraw request");
+            }
+        });
     }
+
     
     private void navigateToDashboard() {
-        
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(this::navigateToDashboard);
-            return;
-        }
-        // Platform.runLater(() -> {
-            try {
-                // endGame();
-                System.out.println("[DEBUG] Loading dashboard FXML");
-                FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
-                Parent dashRoot = dashLoader.load();
-        
-                // Configure dashboard controller
-                DashboardController dashboardController = dashLoader.getController();
+        try {
+            // Check if UI components are still valid
+            if (labelPlayerX == null || labelPlayerX.getScene() == null) {
+                System.err.println("[ERROR] UI components no longer valid");
+                return;
+            }
+    
+            FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+            Parent dashRoot = dashLoader.load();
+            
+            DashboardController dashboardController = dashLoader.getController();
+            if (dashboardController != null) {
                 dashboardController.setName(userName);
                 dashboardController.setScore(String.valueOf(score));
-        
-                // Get current stage and set new scene
-                Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
-                Scene dashScene = new Scene(dashRoot);
-                mainStage.setScene(dashScene);
-                mainStage.show();
-        
-            } catch (IOException ex) {
-                System.err.println("[ERROR] Failed to navigate to dashboard: " + ex.getMessage());
-                ex.printStackTrace();
-                showError("Navigation Error", "Failed to navigate to dashboard");
             }
-        // });
+    
+            Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
+            Scene newScene = new Scene(dashRoot);
+            mainStage.setScene(newScene);
+            mainStage.show();
+    
+        } catch (Exception ex) {
+            System.err.println("[ERROR] Navigation failed: " + ex.getMessage());
+            ex.printStackTrace();
+            // Show error dialog but don't block
+            Platform.runLater(() -> 
+                showError("Navigation Error", "Failed to return to dashboard")
+            );
+        }
     }
+    
 
     private void cleanupResources() {
         try {
