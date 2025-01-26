@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PlayerSocket {
     private static PlayerSocket instance;
@@ -55,7 +57,19 @@ public class PlayerSocket {
         initializeConnection();
         return dos;
     }
-
+    public void reconnect()
+    {
+        if (socket == null || socket.isClosed())
+        {
+            try {
+                socket = new Socket(IP, PORT);
+                dis = new DataInputStream(socket.getInputStream());
+                dos = new DataOutputStream(socket.getOutputStream());
+            } catch (IOException ex) {
+                Logger.getLogger(PlayerSocket.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
     public void closeConnection() {
         try {

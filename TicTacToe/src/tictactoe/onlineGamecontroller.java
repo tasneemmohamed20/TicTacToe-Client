@@ -76,7 +76,7 @@ public class onlineGamecontroller implements Initializable {
     String userName;
     String score;
     private Thread t;
-    private boolean running = true;
+    private volatile boolean running = true;
 
     public void setName(String name) {
         userName = name;
@@ -686,14 +686,14 @@ public class onlineGamecontroller implements Initializable {
 
     private synchronized void stopRefreshThread() {
         running = false;
-        if (t != null) {
-            t.interrupt();
-            try {
-                t.join(2000); // Wait for thread to terminate
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-        }
+//        if (t != null) {
+//            t.interrupt();
+//            try {
+//                t.join(2000); // Wait for thread to terminate
+//            } catch (InterruptedException ex) {
+//                ex.printStackTrace();
+//            }
+//        }
     }
 
     @FXML
