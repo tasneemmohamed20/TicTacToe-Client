@@ -73,6 +73,7 @@ public class DashboardController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         try {
             PlayerSocket playerSocket = PlayerSocket.getInstance();
+            playerSocket.reconnect();
             dos = playerSocket.getDataOutputStream();
             dis = playerSocket.getDataInputStream();
             fetchOnlineUsers(dos, dis);
