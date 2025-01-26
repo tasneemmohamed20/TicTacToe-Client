@@ -18,7 +18,7 @@
       </ImageView>
    </bottom>
    <left>
-      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="86.0" style="-fx-background-color: white; -fx-font-weight: bold;" text="Back" BorderPane.alignment="CENTER" >
+      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="86.0" style="-fx-background-color: white; -fx-font-weight: bold;" text="Back" BorderPane.alignment="CENTER" onAction = "#navToRecords">
          <BorderPane.margin>
             <Insets left="50.0" />
          </BorderPane.margin>

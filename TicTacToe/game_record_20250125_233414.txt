@@ -1,0 +1,6 @@
+O cell2
+X cell1
+O cell4
+X cell6
+O cell8
+X cell9

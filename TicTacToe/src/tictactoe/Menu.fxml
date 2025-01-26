@@ -9,12 +9,12 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="813.0" prefWidth="1260.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.MenuController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="545.0" prefWidth="726.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.MenuController">
    <center>
-      <AnchorPane prefHeight="522.0" prefWidth="600.0" style="-fx-background-color: #5B0F66;" BorderPane.alignment="CENTER">
+      <AnchorPane fx:id="games" prefHeight="522.0" prefWidth="600.0" style="-fx-background-color: #5B0F66;" BorderPane.alignment="CENTER">
          <children>
             <AnchorPane layoutX="894.0" layoutY="75.0" prefHeight="251.0" prefWidth="209.0" AnchorPane.bottomAnchor="74.0" AnchorPane.leftAnchor="894.0" AnchorPane.rightAnchor="-503.0" AnchorPane.topAnchor="75.0" />
-            <VBox layoutX="529.0" layoutY="187.0" prefHeight="297.0" prefWidth="203.0">
+            <VBox layoutX="294.0" layoutY="208.0" prefHeight="379.0" prefWidth="203.0">
                <children>
                   <Button id="whiteBtn" fx:id="onlineBtn" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handleOnlineNavigation" prefHeight="50.0" prefWidth="100.0" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Online">
                      <VBox.margin>
@@ -40,15 +40,26 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
+                  <Button maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#navToRecords" prefHeight="50.0" prefWidth="101.0" style="-fx-background-color: #C5A0D7; -fx-border-radius: 5px; -fx-background-radius: 5px;" text="Games">
+                     <VBox.margin>
+                        <Insets left="50.0" top="40.0" />
+                     </VBox.margin>
+                     <padding>
+                        <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                     </padding>
+                     <font>
+                        <Font size="20.0" />
+                     </font>
+                  </Button>
                </children>
             </VBox>
          </children>
       </AnchorPane>
    </center>
    <bottom>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <AnchorPane prefHeight="285.0" prefWidth="1260.0" BorderPane.alignment="CENTER">
          <children>
-            <ImageView fitHeight="345.0" fitWidth="518.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="192.0" fitWidth="200.0" layoutY="79.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../assets/tictactoe.png" />
                </image>

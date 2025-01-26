@@ -147,5 +147,20 @@ public class replay_gamecontroller implements Initializable {
             default: return null;
         }
     }
-
+    @FXML
+    private void  navToRecords(ActionEvent event)
+    {
+         FXMLLoader loader = null;
+        try {
+            loader = new FXMLLoader(getClass().getResource("AllRecords.fxml"));
+            Parent root = loader.load();
+            AllRecordsController controller = loader.getController();
+            controller.setName(userName);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
