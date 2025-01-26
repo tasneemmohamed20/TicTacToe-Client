@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -277,7 +278,6 @@ public class DashboardController implements Initializable {
 
             String inviteJson = gson.toJson(requsetModel);
             dos.writeUTF(inviteJson);
-
         } catch (IOException ex) {
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -357,43 +357,65 @@ public class DashboardController implements Initializable {
     }
 
     void showInviteAlert(String txt, Object data) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
-        Stage currentStage = (Stage) score.getScene().getWindow();
-        alert.initOwner(currentStage);
+    Platform.runLater(() -> {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, txt, ButtonType.YES, ButtonType.NO);
+
+        if (score != null && score.getScene() != null) {
+            Stage currentStage = (Stage) score.getScene().getWindow();
+            alert.initOwner(currentStage);
+        }
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+        dialogPane.getStyleClass().add("alert");
+
         alert.showAndWait().ifPresent(click -> {
             if (click == ButtonType.NO) {
                 cancelInvite(data);
-            }
-            if (click == ButtonType.YES) {
-                System.out.println("Accepting invitation with data: " + data);
+            } else if (click == ButtonType.YES) {
                 acceptInvite(data);
             }
         });
-    }
+    });
+}
+
 
     private void showError(String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
-    }
+    Platform.runLater(() -> {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+        dialogPane.getStyleClass().add("alert");
+
+        alert.showAndWait();
+    });
+}
+
 
     private void showAlert(String txt) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            if (score != null && score.getScene() != null) {
-                Stage currentStage = (Stage) score.getScene().getWindow();
-                alert.initOwner(currentStage);
-            }
-            alert.setHeaderText(txt);
-            alert.getButtonTypes().clear();
-            alert.getButtonTypes().add(ButtonType.CLOSE);
-            alert.showAndWait();
-        });
-    }
+    Platform.runLater(() -> {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(null);
+        alert.setContentText(txt);
+
+        if (score != null && score.getScene() != null) {
+            Stage currentStage = (Stage) score.getScene().getWindow();
+            alert.initOwner(currentStage);
+        }
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+        dialogPane.getStyleClass().add("alert");
+
+        alert.showAndWait();
+    });
+}
+
 
     private void navigateToGame(GameModel game) {
         System.out.println("SHAKL ELGAMEE F ELNAVIGATE" + game.toString());

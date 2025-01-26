@@ -190,20 +190,25 @@ public class LocalHvsHcontroller implements Initializable {
         }
     }
 
-    private void showAlert(String title, String message, AlertType alertType) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+    private void showAlert(String title, String message, Alert.AlertType alertType) {
+    Alert alert = new Alert(alertType);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
 
-        DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.setPrefWidth(300);
-        dialogPane.setPrefHeight(150);
-        dialogPane.setStyle("-fx-background-color: #5A1E76; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
-        Label content = (Label) dialogPane.lookup(".content");
-        content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
-        alert.showAndWait();
-    }
+    DialogPane dialogPane = alert.getDialogPane();
+    dialogPane.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+    dialogPane.getStyleClass().add("alert");
+
+    dialogPane.getButtonTypes().forEach(buttonType -> {
+        Button button = (Button) dialogPane.lookupButton(buttonType);
+        if (button != null) {
+            button.getStyleClass().add("custom-alert-button");
+        }
+    });
+
+    alert.showAndWait();
+}
 
     /* private void showVideoAlert(String title, String videoPath) {
         try {

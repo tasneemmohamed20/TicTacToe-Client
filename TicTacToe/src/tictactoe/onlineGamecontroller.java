@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -401,11 +402,18 @@ public class onlineGamecontroller implements Initializable {
     }
 
     private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(message);
-        alert.showAndWait();
-    }
+    Alert alert = new Alert(Alert.AlertType.ERROR);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
+
+    DialogPane dialogPane = alert.getDialogPane();
+    dialogPane.getStyleClass().add("alert");
+    dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+
+    alert.showAndWait();
+}
+
 
     private void showErrorOnServerClose(String title, String message) {
         Platform.runLater(() -> {

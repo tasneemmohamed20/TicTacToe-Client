@@ -20,6 +20,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 
 public class LoginController {
     @FXML
@@ -90,13 +94,33 @@ public class LoginController {
     }
 
 
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
+   private void showAlert(Alert.AlertType alertType, String title, String message) {
+    Stage alertStage = new Stage();
+    alertStage.initModality(Modality.APPLICATION_MODAL);
+    alertStage.setTitle(title);
+
+    VBox alertBox = new VBox(15);
+    alertBox.setAlignment(Pos.CENTER);
+    alertBox.getStyleClass().add("custom-alert-box");
+
+    javafx.scene.control.Label messageLabel = new javafx.scene.control.Label(message);
+    messageLabel.getStyleClass().add("custom-alert-label");
+
+    Button okButton = new Button("OK");
+    okButton.getStyleClass().add("custom-alert-button");
+    okButton.setOnAction(e -> alertStage.close());
+
+    alertBox.getChildren().addAll(messageLabel, okButton);
+
+    Scene scene = new Scene(alertBox, 300, 150);
+
+    scene.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+
+    alertStage.setScene(scene);
+    alertStage.showAndWait();
+}
+
+
 
 
     public FXMLLoader navigateToScreen(ActionEvent event, String fxml, String title) {
