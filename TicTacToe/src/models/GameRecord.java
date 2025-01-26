@@ -24,16 +24,9 @@ public class GameRecord {
     private  String file;
     String recordFileName;
      public GameRecord(String fileName) {
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        this.recordFileName = "game_record_" + timestamp + ".txt";
         file = fileName;
     }
-
-    public String getRecordFileName() {
-        return recordFileName;
-    }
-
-    public void saveMove(Move move) {
+    public void saveMove(Move move , String recordFileName) {
     try  {
         BufferedWriter writer = new BufferedWriter(new FileWriter(recordFileName, true));
         writer.write(move.getPlayer() + " " + move.getCellId());
@@ -74,7 +67,7 @@ public class GameRecord {
     return moves;
     }
 
-    public void saveRecordName() {
+    public void saveRecordName(String recordFileName) {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
             writer.write(recordFileName);

@@ -25,9 +25,12 @@ import javafx.util.Duration;
 import theGame.GameBoard;
 import theGame.XO;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.ButtonBar;
+import models.GameRecord;
+import models.Move;
 
 public class LocalHvsHcontroller implements Initializable {
 
@@ -69,7 +72,10 @@ public class LocalHvsHcontroller implements Initializable {
     private Button recordGame;
     @FXML
     private Button backButton;
-
+    private boolean isRecording = false;
+    GameRecord record;
+     String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+      String recordFileName = "game_record_" + timestamp + ".txt";
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         gameBoard = new GameBoard();
@@ -88,6 +94,12 @@ public class LocalHvsHcontroller implements Initializable {
         if (gameBoard.placeXO(row, col)) {
 
             ImageView imageView = new ImageView(gameBoard.isCross() ? xImage : oImage);
+             if (isRecording)
+           {
+                record.saveMove(new Move(gameBoard.isCross() ? "X" : "O" ,getCellId(row , col)) , recordFileName);
+                //System.out.println("File saved to: " + new File("rec.txt").getAbsolutePath());
+
+           }
             imageView.setFitHeight(80);
             imageView.setFitWidth(80);
             clickedButton.setGraphic(imageView);
@@ -264,6 +276,24 @@ public class LocalHvsHcontroller implements Initializable {
     @FXML
     private void handleBackButton(ActionEvent event) {
         new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
+    }
+    private String getCellId(int row, int col) {
+    int cellIndex = (row * 3) + col + 1; 
+    return "cell" + cellIndex; 
+}
+ @FXML
+    private void handleRecordButton(ActionEvent event) {
+        if (!isRecording) {
+            isRecording = true;
+            record = new GameRecord("local.txt");
+            record.saveRecordName(recordFileName);
+            recordGame.setText("Stop Recording");
+
+        } else {
+            isRecording = false;
+            recordGame.setText("Start Recording");
+            System.out.println("Recording Stopped Game recording has been stopped.");
+        }
     }
 
 }

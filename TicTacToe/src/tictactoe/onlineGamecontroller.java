@@ -74,11 +74,16 @@ public class onlineGamecontroller implements Initializable {
     private int scoreX = 0;
     private int scoreO = 0;
     String userName;
+    String score;
     private Thread t;
     private boolean running = true;
 
     public void setName(String name) {
         userName = name;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
     }
 
     @Override
@@ -300,7 +305,7 @@ public class onlineGamecontroller implements Initializable {
                                         cell.setDisable(true);
                                     }
                                     if (isRecording) {
-                                        record.saveMove(new Move(boardState[i], cellId));
+                                        record.saveMove(new Move(boardState[i], cellId) , labelPlayerX.getText() + "_vs_" + labelPlayerO.getText());
 
                                     }
                                 }
@@ -428,8 +433,8 @@ public class onlineGamecontroller implements Initializable {
 
                         DashboardController dashboardController = loader.getController();
                         dashboardController.setName(userName);
-                        dashboardController.setScore(String.valueOf(scoreX));
-
+                        dashboardController.setScore(score);
+                        System.out.println("From game to dash the score is " + score);
                         Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
                         currentStage.close();
 
@@ -694,11 +699,9 @@ public class onlineGamecontroller implements Initializable {
     @FXML
     private void handleRecordButton(ActionEvent event) {
         if (!isRecording) {
-            //  record.saveRecordName("rec.txt");
-
             isRecording = true;
             record = new GameRecord(userName + ".txt");
-            record.saveRecordName();
+            record.saveRecordName(labelPlayerX.getText() + "_vs_" + labelPlayerO.getText());
             recordGame.setText("Stop Recording");
 
         } else {

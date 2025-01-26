@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * FXML Controller class
@@ -102,4 +104,22 @@ public class MenuController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate to the Signup page.");
         }
     }
+    @FXML
+    private void navToRecords(ActionEvent event)
+    {
+         try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("AllRecords.fxml"));
+            Parent levelsRoot = loader.load();
+            AllRecordsController controller = loader.getController();
+            controller.setName("local");
+           controller.setIsOnline(false);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene levelsScene = new Scene(levelsRoot);
+            stage.setScene(levelsScene);
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
 }
