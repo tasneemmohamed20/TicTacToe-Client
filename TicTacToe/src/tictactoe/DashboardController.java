@@ -358,7 +358,7 @@ public class DashboardController implements Initializable {
 
     void showInviteAlert(String txt, Object data) {
     Platform.runLater(() -> {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, txt, ButtonType.YES, ButtonType.NO);
+        Alert alert = new Alert(Alert.AlertType.NONE, txt, ButtonType.YES, ButtonType.NO);
 
         if (score != null && score.getScene() != null) {
             Stage currentStage = (Stage) score.getScene().getWindow();
@@ -367,7 +367,9 @@ public class DashboardController implements Initializable {
 
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
-        dialogPane.getStyleClass().add("alert");
+        dialogPane.getStyleClass().add("alert"); 
+
+        dialogPane.setGraphic(null);
 
         alert.showAndWait().ifPresent(click -> {
             if (click == ButtonType.NO) {
@@ -379,10 +381,9 @@ public class DashboardController implements Initializable {
     });
 }
 
-
     private void showError(String title, String message) {
     Platform.runLater(() -> {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
@@ -391,17 +392,23 @@ public class DashboardController implements Initializable {
         dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
         dialogPane.getStyleClass().add("alert");
 
+        dialogPane.setGraphic(null);
+
         alert.showAndWait();
     });
 }
 
 
-    private void showAlert(String txt) {
+
+
+  private void showAlert(String txt) {
     Platform.runLater(() -> {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle("Information");
         alert.setHeaderText(null);
         alert.setContentText(txt);
+
+        alert.getButtonTypes().add(ButtonType.OK);
 
         if (score != null && score.getScene() != null) {
             Stage currentStage = (Stage) score.getScene().getWindow();
@@ -410,12 +417,13 @@ public class DashboardController implements Initializable {
 
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
-        dialogPane.getStyleClass().add("alert");
+        dialogPane.getStyleClass().add("alert"); 
+
+        dialogPane.setGraphic(null); 
 
         alert.showAndWait();
     });
 }
-
 
     private void navigateToGame(GameModel game) {
         System.out.println("SHAKL ELGAMEE F ELNAVIGATE" + game.toString());

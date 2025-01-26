@@ -101,7 +101,7 @@ public class LoginController {
 
     VBox alertBox = new VBox(15);
     alertBox.setAlignment(Pos.CENTER);
-    alertBox.getStyleClass().add("custom-alert-box");
+    alertBox.getStyleClass().add("alert");
 
     javafx.scene.control.Label messageLabel = new javafx.scene.control.Label(message);
     messageLabel.getStyleClass().add("custom-alert-label");
@@ -119,9 +119,6 @@ public class LoginController {
     alertStage.setScene(scene);
     alertStage.showAndWait();
 }
-
-
-
 
     public FXMLLoader navigateToScreen(ActionEvent event, String fxml, String title) {
         FXMLLoader loader = null;

@@ -62,13 +62,29 @@
 .alert {
     -fx-padding: 20px;
     -fx-background-color: #5A1E76;
-    -fx-border-color: #E2BE00;
+    -fx-border-color: #5A1E76;
     -fx-border-width: 2px;
     -fx-border-radius: 10px;
     -fx-background-radius: 10px;
     -fx-font-size: 14px;
-    -fx-text-fill: #E2BE00;
+    -fx-text-fill: #E2BE00; 
 }
+
+.alert .content {
+    -fx-text-fill: #E2BE00; 
+    -fx-font-size: 14px;
+}
+
+.dialog-pane .button {
+    -fx-background-color: #E2BE00; 
+    -fx-text-fill: #5A1E76; 
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
 
 
 .alert-disabled {
@@ -79,7 +95,7 @@
 
 .custom-alert-box {
     -fx-padding: 20px;
-    -fx-background-color: #5A1E76;
+    -fx-background-color: #E2BE00;
     -fx-border-color: #E2BE00;
     -fx-border-width: 2px;
     -fx-border-radius: 10px;

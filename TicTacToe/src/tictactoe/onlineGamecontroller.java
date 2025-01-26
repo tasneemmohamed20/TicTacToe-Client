@@ -14,12 +14,15 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -30,7 +33,10 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import models.GameModel;
 import models.GameRecord;
 import models.Move;
@@ -42,7 +48,8 @@ import theGame.XO;
  * FXML Controller class to manage the online Tic Tac Toe game.
  */
 public class onlineGamecontroller implements Initializable {
-
+    @FXML
+    private BorderPane gameRoot;
     @FXML
     private Label labelPlayerX;
     @FXML
@@ -77,6 +84,8 @@ public class onlineGamecontroller implements Initializable {
     String userName;
     private Thread t;
     private boolean running = true;
+    @FXML
+    private Button withdrawing;
 
     public void setName(String name) {
         userName = name;
@@ -84,6 +93,11 @@ public class onlineGamecontroller implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        if (gameRoot == null) {
+        System.out.println("gameRoot is not injected.");
+        } else {
+            System.out.println("gameRoot is set correctly.");
+        }
         try {
             PlayerSocket playerSocket = PlayerSocket.getInstance();
             dos = playerSocket.getDataOutputStream();
@@ -364,20 +378,24 @@ public class onlineGamecontroller implements Initializable {
         }
     }
 
-    private void handleGameOver(String resultMessage, String winner) {
-
+   private void handleGameOver(String resultMessage, String winner) { 
+    Platform.runLater(() -> {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Game Over");
         alert.setHeaderText(resultMessage);
         alert.showAndWait();
 
-        if (winner != null) {
-            String videoPath = winner.equals(playerSymbol) ? "/assets/bravo.mp4" : "/assets/looser.mp4";
-            showVideoAlert(resultMessage, "/assets/bravo.mp4");
+        if (winner != null && winner.equals(playerSymbol)) { 
+            showWinnerGif(); 
         }
 
+        String videoPath = winner.equals(playerSymbol) ? "/assets/bravo.mp4" : "/assets/looser.mp4";
+        showVideoAlert(resultMessage, videoPath);
+
         resetBoard();
-    }
+    });
+}
+
 
     private String determineWinner(String resultMessage) {
         if (resultMessage.contains(playerSymbol)) {
@@ -526,6 +544,9 @@ public class onlineGamecontroller implements Initializable {
 
             if (winner.equals(currentPlayer + " wins!")) {
                 videoPath = "/assets/bravo.mp4";
+                 Platform.runLater(() -> {
+            showWinnerGif();
+        });
             } else if (winner.equals("withdraw")) {
                 videoPath = "/assets/bravo.mp4";
             } else if (winner.equals("It's a draw!")) {
@@ -730,6 +751,28 @@ public class onlineGamecontroller implements Initializable {
             cell.setStyle("-fx-background-color: yellow;");
         }
     }
+}
+
+ private void showWinnerGif() {
+    Platform.runLater(() -> {
+        Image gifImage = new Image(getClass().getResource("/assets/congrsts.gif").toExternalForm());
+        ImageView imageView = new ImageView(gifImage);
+
+        imageView.setFitWidth(950);
+        imageView.setFitHeight(600);
+
+        StackPane overlay = new StackPane(imageView);
+        overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.);"); 
+        overlay.setAlignment(Pos.CENTER);
+
+        if (gameRoot != null) {
+            gameRoot.setCenter(overlay); 
+
+            new Timeline(new KeyFrame(Duration.seconds(60), e -> gameRoot.setCenter(null))).play();
+        } else {
+            System.out.println("gameRoot is null! Make sure it's initialized.");
+        }
+    });
 }
 
 
