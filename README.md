@@ -52,4 +52,14 @@ java -cp "build/classes:lib/*" tictactoe.TicTacToe
    * vs Computer: Play against AI
 3. For online games, wait for opponent or send invitation
 4. Play game and track scores
+
+## Team Members
+
+- [Nada Ali](https://github.com/nada263204)
+- [Mariam Rafaat](https://github.com/mariam175)
+- [Eslam El-Sayed](https://github.com/eslamelsayed010)
+- [Mohamed Khaled](https://github.com/mohamedKhaled655)
+- [Tasneem M. Mohamed](https://github.com/tasneemmohamed20)
+
+
   
