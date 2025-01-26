@@ -5,11 +5,17 @@
  */
 package tictactoe;
 
+import com.google.gson.Gson;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +29,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
+import models.RequsetModel;
 
 /**
  * FXML Controller class
@@ -30,6 +37,7 @@ import javafx.stage.Stage;
  * @author El-Wattaneya
  */
 public class VideoLayoutController implements Initializable {
+    private String userName;
 
     @FXML
     private Label winnerLabel;
@@ -43,6 +51,9 @@ public class VideoLayoutController implements Initializable {
     private MediaPlayer mediaPlayer;
     private Runnable onNewGameAction;
 
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
     public void initialize(String path) {
         try {
             String videoPath = getClass().getResource(path).toExternalForm();
@@ -66,30 +77,57 @@ public class VideoLayoutController implements Initializable {
 
     @FXML
     private void onNewGameClicked(ActionEvent event) {
-        if (onNewGameAction != null) {
+        // First stop media player
+        if (mediaPlayer != null) {
             mediaPlayer.stop();
+        }  
+              
+        // Execute new game action to clean up game resources
+        if (onNewGameAction != null) {
             onNewGameAction.run();
-        } else {
-            System.out.println("No action defined for New Game.");
         }
+
     }
 
     @FXML
     private void onCloseClicked(ActionEvent event) {
-
-        mediaPlayer.stop();
-        System.exit(0);
         try {
-            mediaPlayer.stop();
-            ((Button) event.getSource()).getScene().getWindow().hide();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dashboard.fxml"));
-            Parent levelsRoot = loader.load();
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene levelsScene = new Scene(levelsRoot);
-            stage.setScene(levelsScene);
-            stage.show();
+            // First stop the media player
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+            }
+
+            // Get the current video stage
+            Stage videoStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            // Get the game stage from the singleton application stage
+            Stage gameStage = TicTacToe.getPrimaryStage();
+
+            // Send logout request
+            PlayerSocket playerSocket = PlayerSocket.getInstance();
+            DataOutputStream dos = playerSocket.getDataOutputStream();
+            
+            // Create logout request
+            Map<String, String> data = new HashMap<>();
+            data.put("username", userName); // You'll need to add userName as a class field
+            String jsonRequest = new Gson().toJson(new RequsetModel("logout", data));
+            dos.writeUTF(jsonRequest);
+            dos.flush();
+            
+            // Load the menu scene
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+            Parent menuRoot = loader.load();
+            
+            // Set the menu scene on the main stage
+            gameStage.setScene(new Scene(menuRoot));
+            gameStage.show();
+            
+            // Close the video window
+            videoStage.close();
+
         } catch (IOException ex) {
-            Logger.getLogger(VideoLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(VideoLayoutController.class.getName()).log(Level.SEVERE, 
+                "Error navigating to menu", ex);
         }
     }
 
