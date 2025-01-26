@@ -19,9 +19,10 @@ import javafx.stage.Stage;
  * @author tasneem
  */
 public class TicTacToe extends Application {
-    
+    private static Stage primaryStage;
     @Override
     public void start(Stage stage) throws Exception {
+        primaryStage = stage;
         Parent root = FXMLLoader.load(getClass().getResource("Menu.fxml"));
         
         Scene scene = new Scene(root);
@@ -40,6 +41,9 @@ public class TicTacToe extends Application {
                 
             });
         });
+    }
+    public static Stage getPrimaryStage() {
+        return primaryStage;
     }
 
     /**

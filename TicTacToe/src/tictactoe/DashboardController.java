@@ -71,7 +71,18 @@ public class DashboardController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        
         try {
+
+            if (t != null && t.isAlive()) {
+                running = false;
+                t.interrupt();
+                t = null;
+            }
+    
+            // Reset state
+            running = true;
+            
             PlayerSocket playerSocket = PlayerSocket.getInstance();
             dos = playerSocket.getDataOutputStream();
             dis = playerSocket.getDataInputStream();
@@ -85,6 +96,7 @@ public class DashboardController implements Initializable {
                     System.err.println("Score or its scene is not initialized.");
                 }
             });
+
         } catch (IOException ex) {
             Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -421,7 +433,7 @@ public class DashboardController implements Initializable {
             stage.show();
             controller.setName(userName);
             controller.setScore(score.getText());
-             System.out.println("From dash to game the score is " + score.getText());
+            System.out.println("From dash to game the score is " + score.getText());
             controller.initializeGameUI(game, currentName, stage);
 
         } catch (IOException e) {

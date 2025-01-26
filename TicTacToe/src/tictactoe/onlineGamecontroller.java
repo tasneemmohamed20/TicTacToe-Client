@@ -143,6 +143,7 @@ public class onlineGamecontroller implements Initializable {
     }
 
     void initializeGameUI(GameModel game, String currentPlayer, Stage stage) {
+ 
         this.currentPlayer = currentPlayer;
         System.out.println("initializeGameUI currentPlayer" + currentPlayer);
         labelPlayerX.setText(game.getPlayer1() + " (" + game.getPlayer1Symbol() + ")");
@@ -177,24 +178,62 @@ public class onlineGamecontroller implements Initializable {
         });*/
     }
 
+    // private void startServerListener() {
+    //     t = new Thread(() -> {
+    //         while (running) {
+    //             try {
+    //                 String responseString = dis.readUTF();
+    //                 System.out.println("[DEBUG] Received message from server: " + responseString);
+    //                 ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
+    //                 Platform.runLater(() -> handleServerResponse(response));
+    //             } catch (IOException | JsonSyntaxException ex) {
+    //                 Platform.runLater(() -> showErrorOnServerClose("Connection Error",
+    //                         "Disconnected from the server: " + ex.getMessage()));
+    //                 break;
+    //             }
+    //         }
+    //     });
+    //     t.start();
+    // }
+
+
     private void startServerListener() {
         t = new Thread(() -> {
             while (running) {
                 try {
-                    String responseString = dis.readUTF();
-                    System.out.println("[DEBUG] Received message from server: " + responseString);
-                    ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
-                    Platform.runLater(() -> handleServerResponse(response));
+                    if (!running || Thread.interrupted()) {
+                        System.out.println("[DEBUG] Server listener thread stopping due to interrupt");
+                        break;
+                    }
+    
+                    // Add timeout to read operation
+                    String responseString = null;
+                    if (dis.available() > 0) {
+                        responseString = dis.readUTF();
+                        System.out.println("[DEBUG] Received message from server: " + responseString);
+                        ResponsModel response = gson.fromJson(responseString, ResponsModel.class);
+                        Platform.runLater(() -> handleServerResponse(response));
+                    } else {
+                        Thread.sleep(100); // Small delay to prevent busy waiting
+                    }
                 } catch (IOException | JsonSyntaxException ex) {
+                    if (!running) {
+                        System.out.println("[DEBUG] Server listener thread stopping normally");
+                        break;  
+                    }
                     Platform.runLater(() -> showErrorOnServerClose("Connection Error",
                             "Disconnected from the server: " + ex.getMessage()));
                     break;
+                } catch (InterruptedException ex) {
+                    System.out.println("[DEBUG] Server listener thread interrupted");
+                    break;
                 }
             }
+            System.out.println("[DEBUG] Server listener thread stopped");
         });
+        t.setDaemon(true);
         t.start();
     }
-
     private void handleServerResponse(ResponsModel response) {
         if (response == null) {
             System.out.println("Received an empty or null response.");
@@ -226,26 +265,7 @@ public class onlineGamecontroller implements Initializable {
                 break;
 
             case "gameOver":
-                /*
-                System.out.println("======================================");
-                System.out.println(response.getMessage());
-                System.out.println(response.getData());
-                System.out.println("======================================");
-                updateScores((Map<String, String>) response.getData(), response.getMessage());
-                showVideoAlert(response.getMessage(), response.getMessage());
-                 System.out.println("Game over: " + response.getMessage());
-                if (response.getData() != null) {
-                    updateScores((Map<String, String>) response.getData(), response.getMessage());
-                }
-                if (gameModel != null) {
-                    highlightWinningLine(gameModel.getWinningLine());
-                }
-                showVideoAlert(response.getMessage(), response.getMessage());
 
-
-                //handleGameOver(response.getMessage(), winner);
-                break;
-*/
                 System.out.println("Game over: " + response.getMessage());
                 if (response.getData() != null) {
                     updateScores((Map<String, String>) response.getData(), response.getMessage());
@@ -256,6 +276,7 @@ public class onlineGamecontroller implements Initializable {
                 }
                 showVideoAlert(response.getMessage(), response.getMessage());
                 break;
+
             case "info":
                 System.out.println("Info message: " + response.getMessage());
                 Platform.runLater(() -> {
@@ -310,21 +331,7 @@ public class onlineGamecontroller implements Initializable {
                                     }
                                 }
                             }
-
-                            // Update labels to show current turn
-                            /* labelPlayerX.setText(gameData.getPlayer1() + " (X)"
-                                    + (playerSymbol.equals("X") ? " [You]" : "")
-                                    + (currentTurn.equals("X") ? " (Your Turn)" : ""));
-
-                            labelPlayerO.setText(gameData.getPlayer2() + " (O)"
-                                    + (playerSymbol.equals("O") ? " [You]" : "")
-                                    + (currentTurn.equals("O") ? " (Your Turn)" : ""));
-
-                            isPlayerTurn = currentTurn.equals(playerSymbol);
-                            System.out.println("[DEBUG] Board updated. Current turn: " + currentTurn
-                                    + ", Player symbol: " + playerSymbol
-                                    + ", isPlayerTurn: " + isPlayerTurn);*/
-                        });
+                       });
                     } catch (Exception e) {
                         System.err.println("Error parsing update data: " + e.getMessage());
                     }
@@ -333,8 +340,9 @@ public class onlineGamecontroller implements Initializable {
             case "withdraw":
                 Platform.runLater(() -> {
                     //showError(currentPlayer, currentPlayer + " withdrawed");
+                    endGame();
                     showVideoAlert(response.getMessage(), "withdraw");
-                    navigateToMenu();
+                    // navigateToDashboard();
                 });
                 break;
 
@@ -517,10 +525,63 @@ public class onlineGamecontroller implements Initializable {
         cell.setGraphic(imageView);
     }
 
+    // public void endGame() {
+    //     System.out.println("[DEBUG] Ending game - Current Thread: " + Thread.currentThread().getName());
+    //     running = false;
+    //     if (t != null) {
+           
+    //         try { 
+    //             t.interrupt();
+    //             System.out.println("[DEBUG] Waiting for game thread to finish");
+    //             t.join(1000); // Wait for thread to finish
+    //             if (t.isAlive()) {
+    //                 System.out.println("[WARNING] Game thread did not terminate within timeout");
+    //             } else {
+    //                 System.out.println("[DEBUG] Game thread terminated successfully");
+    //             }
+
+    //         } catch (InterruptedException e) {
+    //             e.printStackTrace();
+    //         }
+    //         t = null;
+    //     }
+    // }
+    public void endGame() {
+        System.out.println("[DEBUG] Ending game - Current Thread: " + Thread.currentThread().getName());
+        running = false;  // Signal thread to stop
+        
+        if (t != null) {
+            try {
+                t.interrupt();
+                System.out.println("[DEBUG] Waiting for game thread to finish");
+                
+                // Increase timeout and add multiple attempts
+                for (int i = 0; i < 3; i++) {
+                    t.join(1000);
+                    if (!t.isAlive()) {
+                        System.out.println("[DEBUG] Game thread terminated successfully");
+                        break;
+                    }
+                    System.out.println("[DEBUG] Attempt " + (i+1) + " to stop thread");
+                }
+                
+                if (t.isAlive()) {
+                    System.out.println("[WARNING] Force stopping game thread");
+                    t.stop(); // Force stop as last resort
+                }
+            } catch (InterruptedException e) {
+                System.out.println("[ERROR] Thread interruption: " + e.getMessage());
+            } finally {
+                t = null;
+            }
+        }
+    }
     private void showVideoAlert(String title, String winner) {
         try {
+            endGame();
+            System.out.println("[DEBUG] Stopping game thread before showing video");
+            
             String videoPath;
-
             if (winner.equals(currentPlayer + " wins!")) {
                 videoPath = "/assets/bravo.mp4";
             } else if (winner.equals("withdraw")) {
@@ -531,6 +592,7 @@ public class onlineGamecontroller implements Initializable {
                 videoPath = "/assets/looser.mp4";
             }
 
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/VideoLayout.fxml"));
 
             Parent root = loader.load();
@@ -539,14 +601,34 @@ public class onlineGamecontroller implements Initializable {
 
             controller.initialize(videoPath);
             controller.setWinnerText(title);
+            controller.setUserName(userName);
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
             stage.show();
+
             controller.setOnNewGameAction(() -> {
-                System.out.println("Starting a new game...");
-                resetBoard();
-                stage.close();
+            Platform.runLater(() -> {
+                try {
+                    // Load dashboard first
+                    FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+                    Parent dashRoot = dashLoader.load();
+                    DashboardController dashboardController = dashLoader.getController();
+                    dashboardController.setName(userName);
+                    dashboardController.setScore(String.valueOf(score));
+
+                    // Get the main stage and set the new scene
+                    Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
+                    mainStage.setScene(new Scene(dashRoot));
+                    mainStage.show();
+
+                    // Close video window after successful navigation
+                    stage.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    showError("Navigation Error", "Failed to navigate to dashboard");
+                }
             });
+        });
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -566,9 +648,17 @@ public class onlineGamecontroller implements Initializable {
         if (winner.equals(player1 + " wins!")) {
             scoreX += 10;
             labelScoreX.setText(String.valueOf(scoreX));
+            if (currentPlayer.equals(player1)) {
+                int totalScore = Integer.parseInt(score) + 10;
+                score = String.valueOf(totalScore);
+            }
         } else if (winner.equals(player2 + " wins!")) {
             scoreO += 10;
             labelScoreO.setText(String.valueOf(scoreO));
+            if (currentPlayer.equals(player2)) {
+                int totalScore = Integer.parseInt(score) + 10;
+                score = String.valueOf(totalScore);
+            }
         }
     }
 
@@ -618,53 +708,131 @@ public class onlineGamecontroller implements Initializable {
         }
     }
 
+    // private void sendWithdrawRequest() {
+    //     endGame();
+    //     System.out.println("[DEBUG] Stopping game thread before withdraw");
+    //     System.out.println("[DEBUG-WITHDRAW] Current thread: " + Thread.currentThread().getName());
+
+    //         try {
+    //             Map<String, String> data = new HashMap<>();
+    //             data.put("player", currentPlayer);
+    //             data.put("gameId", gameId);
+    //             RequsetModel request = new RequsetModel("withdraw", data);
+    //             System.out.println("[DEBUG-WITHDRAW] Sending withdraw request to server");
+    //             dos.writeUTF(gson.toJson(request));
+    //             dos.flush();
+    //             System.out.println("[DEBUG-WITHDRAW] Request sent successfully");
+
+
+    //             // Platform.runLater(this::navigateToDashboard);
+    //             Platform.runLater(() -> {
+    //                 System.out.println("[DEBUG-WITHDRAW] Inside Platform.runLater");
+    //                 try {
+    //                     System.out.println("[DEBUG-WITHDRAW] Loading dashboard FXML");
+    //                     FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+    //                     Parent dashRoot = dashLoader.load();
+    //                     System.out.println("[DEBUG-WITHDRAW] Dashboard FXML loaded");
+        
+    //                     DashboardController dashboardController = dashLoader.getController();
+    //                     dashboardController.setName(userName);
+    //                     dashboardController.setScore(String.valueOf(score));
+    //                     System.out.println("[DEBUG-WITHDRAW] Dashboard controller configured");
+        
+    //                     // End game after dashboard is ready but before showing it
+    //                     System.out.println("[DEBUG-WITHDRAW] Calling endGame");
+    //                     endGame();
+    //                     System.out.println("[DEBUG-WITHDRAW] endGame completed");
+        
+    //                     // Switch scenes
+    //                     Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
+    //                     Scene dashScene = new Scene(dashRoot);
+    //                     mainStage.setScene(dashScene);
+    //                     System.out.println("[DEBUG-WITHDRAW] New scene set");
+    //                     mainStage.show();
+    //                     System.out.println("[DEBUG-WITHDRAW] Dashboard displayed");
+        
+    //                 } catch (IOException ex) {
+    //                     System.err.println("[ERROR-WITHDRAW] Navigation failed: " + ex.getMessage());
+    //                     ex.printStackTrace();
+    //                     showError("Navigation Error", "Failed to navigate to dashboard");
+    //                 }
+    //             });
+    //         } catch (IOException ex) {
+    //             showError("Connection Error", "Failed to send quit request: " + ex.getMessage());
+    //         }
+    // }
+
+
+     
     private void sendWithdrawRequest() {
         try {
-
+            // Send withdraw request first
             Map<String, String> data = new HashMap<>();
             data.put("player", currentPlayer);
             data.put("gameId", gameId);
-
             RequsetModel request = new RequsetModel("withdraw", data);
             dos.writeUTF(gson.toJson(request));
             dos.flush();
-
-            //cleanupResources();
-            Platform.runLater(() -> navigateToMenu());
+    
+            // Then handle navigation
+            Platform.runLater(() -> {
+                try {
+                    // Load dashboard first
+                    FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+                    Parent dashRoot = dashLoader.load();
+                    DashboardController dashboardController = dashLoader.getController();
+                    dashboardController.setName(userName);
+                    dashboardController.setScore(String.valueOf(score));
+    
+                    // End game thread
+                    endGame();
+    
+                    // Get the main stage and set the new scene
+                    Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
+                    mainStage.setScene(new Scene(dashRoot));
+                    mainStage.show();
+    
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    showError("Navigation Error", "Failed to navigate to dashboard");
+                }
+            });
+    
         } catch (IOException ex) {
-            showError("Connection Error", "Failed to send quit request: " + ex.getMessage());
+            showError("Connection Error", "Failed to send withdraw request: " + ex.getMessage());
         }
     }
-
-    private void navigateToMenu() {
-        // Stop any running threads
-        stopRefreshThread();
-
-        Platform.runLater(() -> {
+    
+    private void navigateToDashboard() {
+        
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(this::navigateToDashboard);
+            return;
+        }
+        // Platform.runLater(() -> {
             try {
-                // Close current socket connections
-                cleanupResources();
-
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
-                Parent root = loader.load();
-
-                DashboardController dashboardController = loader.getController();
+                // endGame();
+                System.out.println("[DEBUG] Loading dashboard FXML");
+                FXMLLoader dashLoader = new FXMLLoader(getClass().getResource("/tictactoe/dashboard.fxml"));
+                Parent dashRoot = dashLoader.load();
+        
+                // Configure dashboard controller
+                DashboardController dashboardController = dashLoader.getController();
                 dashboardController.setName(userName);
-                dashboardController.setScore(String.valueOf(scoreX));
-
-                Stage currentStage = (Stage) labelPlayerX.getScene().getWindow();
-
-                // Ensure scene creation on JavaFX thread
-                Scene scene = new Scene(root);
-                currentStage.setScene(scene);
-                currentStage.centerOnScreen();
-                currentStage.show();
-
-            } catch (Exception ex) {
+                dashboardController.setScore(String.valueOf(score));
+        
+                // Get current stage and set new scene
+                Stage mainStage = (Stage) labelPlayerX.getScene().getWindow();
+                Scene dashScene = new Scene(dashRoot);
+                mainStage.setScene(dashScene);
+                mainStage.show();
+        
+            } catch (IOException ex) {
+                System.err.println("[ERROR] Failed to navigate to dashboard: " + ex.getMessage());
                 ex.printStackTrace();
-                showError("Navigation Error", "Failed to navigate to dashboard: " + ex.getMessage());
+                showError("Navigation Error", "Failed to navigate to dashboard");
             }
-        });
+        // });
     }
 
     private void cleanupResources() {
