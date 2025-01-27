@@ -571,11 +571,11 @@ public class onlineGamecontroller implements Initializable {
             moveData.put("cell", cellId);
             moveData.put("symbol", playerSymbol);
 
-            if (playerSymbol.equals("X")) {
+            /*if (playerSymbol.equals("X")) {
                 setCellImage(clickedCell, xImage);
             } else {
                 setCellImage(clickedCell, oImage);
-            }
+            }*/
 
             RequsetModel request = new RequsetModel("makeMove", moveData);
             dos.writeUTF(gson.toJson(request));

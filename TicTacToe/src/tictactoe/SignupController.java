@@ -83,10 +83,10 @@ public class SignupController {
 
     VBox alertBox = new VBox(15);
     alertBox.setAlignment(Pos.CENTER);
-    alertBox.getStyleClass().add("custom-alert-box");
+   // alertBox.getStyleClass().add("custom-alert-box");
 
     javafx.scene.control.Label messageLabel = new javafx.scene.control.Label(message);
-    messageLabel.getStyleClass().add("custom-alert-label");
+   // messageLabel.getStyleClass().add("custom-alert-label");
 
     Button okButton = new Button("OK");
     okButton.getStyleClass().add("custom-alert-button");
