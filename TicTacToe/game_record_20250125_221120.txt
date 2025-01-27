@@ -1,7 +1,0 @@
-x cell1
-o cell3
-x cell6
-o cell9
-x cell8
-o cell4
-x cell7
