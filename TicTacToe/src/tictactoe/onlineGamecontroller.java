@@ -685,6 +685,7 @@ public class onlineGamecontroller implements Initializable {
             controller.initialize(videoPath);
             controller.setWinnerText(title);
             controller.setUserName(userName);
+            controller.setIsOnline(true);
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
             stage.show();
