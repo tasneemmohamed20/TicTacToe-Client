@@ -14,11 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="gameRoot" maxHeight="-Infinity" maxWidth="-Infinity" 
-    minHeight="-Infinity" minWidth="-Infinity" prefHeight="545.0" prefWidth="726.0" 
-    style="-fx-background-color: #5A1E76;" 
-    xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" 
-    fx:controller="tictactoe.onlineGamecontroller">
+<BorderPane fx:id="gameRoot" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="545.0" prefWidth="726.0" style="-fx-background-color: #5A1E76;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.onlineGamecontroller">
 <right>
       <AnchorPane>
          <BorderPane.margin>
@@ -31,7 +27,6 @@
                      <Insets />
                   </VBox.margin>
                </Button>
-              <Button fx:id="withdrawing" mnemonicParsing="false" onAction="#handleWithdarwAction" prefHeight="60.0" prefWidth="118.0" style="-fx-background-color: #F4F6F5; -fx-background-radius: 10; -fx-font-weight: bold;" text="Withdraw" />
           </VBox>
          </children>
       </AnchorPane>
