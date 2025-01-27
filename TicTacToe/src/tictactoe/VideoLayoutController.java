@@ -37,6 +37,7 @@ import models.RequsetModel;
  * @author El-Wattaneya
  */
 public class VideoLayoutController implements Initializable {
+
     private String userName;
 
     @FXML
@@ -50,10 +51,16 @@ public class VideoLayoutController implements Initializable {
 
     private MediaPlayer mediaPlayer;
     private Runnable onNewGameAction;
+    private boolean isOnline;
 
     public void setUserName(String userName) {
         this.userName = userName;
     }
+
+    public void setIsOnline(boolean isOnline) {
+        this.isOnline = isOnline;
+    }
+
     public void initialize(String path) {
         try {
             String videoPath = getClass().getResource(path).toExternalForm();
@@ -77,12 +84,11 @@ public class VideoLayoutController implements Initializable {
 
     @FXML
     private void onNewGameClicked(ActionEvent event) {
-       
+
         if (mediaPlayer != null) {
             mediaPlayer.stop();
-        }  
-              
-        
+        }
+
         if (onNewGameAction != null) {
             onNewGameAction.run();
         }
@@ -92,42 +98,39 @@ public class VideoLayoutController implements Initializable {
     @FXML
     private void onCloseClicked(ActionEvent event) {
         try {
-            
+
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
             }
 
-           
-            Stage videoStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            if (isOnline) {
+                Stage videoStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-            
-            Stage gameStage = TicTacToe.getPrimaryStage();
+                Stage gameStage = TicTacToe.getPrimaryStage();
 
-            
-            PlayerSocket playerSocket = PlayerSocket.getInstance();
-            DataOutputStream dos = playerSocket.getDataOutputStream();
-            
-           
-            Map<String, String> data = new HashMap<>();
-            data.put("username", userName); 
-            String jsonRequest = new Gson().toJson(new RequsetModel("logout", data));
-            dos.writeUTF(jsonRequest);
-            dos.flush();
-            
-           
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
-            Parent menuRoot = loader.load();
-            
-            
-            gameStage.setScene(new Scene(menuRoot));
-            gameStage.show();
-            
-            
-            videoStage.close();
+                PlayerSocket playerSocket = PlayerSocket.getInstance();
+                DataOutputStream dos = playerSocket.getDataOutputStream();
+
+                Map<String, String> data = new HashMap<>();
+                data.put("username", userName);
+                String jsonRequest = new Gson().toJson(new RequsetModel("logout", data));
+                dos.writeUTF(jsonRequest);
+                dos.flush();
+
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
+                Parent menuRoot = loader.load();
+
+                gameStage.setScene(new Scene(menuRoot));
+                gameStage.show();
+
+                videoStage.close();
+            } else {
+                System.exit(0);
+            }
 
         } catch (IOException ex) {
-            Logger.getLogger(VideoLayoutController.class.getName()).log(Level.SEVERE, 
-                "Error navigating to menu", ex);
+            Logger.getLogger(VideoLayoutController.class.getName()).log(Level.SEVERE,
+                    "Error navigating to menu", ex);
         }
     }
 
