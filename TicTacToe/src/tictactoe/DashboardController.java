@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -71,7 +72,7 @@ public class DashboardController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
+
         try {
 
             if (t != null && t.isAlive()) {
@@ -79,10 +80,10 @@ public class DashboardController implements Initializable {
                 t.interrupt();
                 t = null;
             }
-    
+
             // Reset state
             running = true;
-            
+
             PlayerSocket playerSocket = PlayerSocket.getInstance();
             playerSocket.reconnect();
             dos = playerSocket.getDataOutputStream();
@@ -204,16 +205,15 @@ public class DashboardController implements Initializable {
                             break;
                     }
                     Thread.sleep(5000);
-                } catch (IOException ex) {
-                    if (!running) {
-                        break;
-                    }
-                    Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ex) {
-                    System.out.println("Thread stopped");
+                } catch ( IOException ex) {                   
+                    running = false;
+                    Platform.runLater(() -> {
+                        showAlert("Connection Lost. Attempting to reconnect...");
+                    });
                     break;
-                    // } finally {
-                    //     System.out.println("Refresh thread terminated");
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         });
@@ -222,67 +222,68 @@ public class DashboardController implements Initializable {
     }
 
     public void displayOnlineUsers(List<String> users) {
-    Platform.runLater(() -> {
-        try {
-            if (users == null) {
-                System.err.println("Users list is null.");
-                return;
-            }
-
-            if (userName == null) {
-                System.err.println("Username is null.");
-                return;
-            }
-
-            List<String> filteredUsers = users.stream()
-                    .filter(user -> user != null && !user.equals(userName))
-                    .collect(Collectors.toList());
-
-            ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
-            final boolean[] isAnyButtonDisabled = {false};
-
-            onlineusers.setCellFactory(lv -> new ListCell<String>() {
-                private final HBox content;
-                private final Label label;
-                private final Button inviteButton;
-
-                {
-                    label = new Label();
-                    inviteButton = new Button("Invite");
-
-                    inviteButton.setOnAction(event -> {
-                        invitedUser = getItem();
-                        sendInvite(currentName, invitedUser);
-                        isAnyButtonDisabled[0] = true;
-                        inviteButton.setText("Invited");
-                        updateAllCells();
-                    });
-
-                    content = new HBox(20, label, inviteButton);
+        Platform.runLater(() -> {
+            try {
+                if (users == null) {
+                    System.err.println("Users list is null.");
+                    return;
                 }
 
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setGraphic(null);
-                    } else {
-                        label.setText(item);
-                        inviteButton.setDisable(isAnyButtonDisabled[0]); // Disable button if invite sent
-                        setGraphic(content);
+                if (userName == null) {
+                    System.err.println("Username is null.");
+                    return;
+                }
+
+                List<String> filteredUsers = users.stream()
+                        .filter(user -> user != null && !user.equals(userName))
+                        .collect(Collectors.toList());
+
+                ObservableList<String> observableList = FXCollections.observableArrayList(filteredUsers);
+                final boolean[] isAnyButtonDisabled = {false};
+
+                onlineusers.setCellFactory(lv -> new ListCell<String>() {
+                    private final HBox content;
+                    private final Label label;
+                    private final Button inviteButton;
+
+                    {
+                        label = new Label();
+                        inviteButton = new Button("Invite");
+
+                        inviteButton.setOnAction(event -> {
+                            invitedUser = getItem();
+                            sendInvite(currentName, invitedUser);
+                            isAnyButtonDisabled[0] = true;
+                            inviteButton.setText("Invited");
+                            updateAllCells();
+                        });
+
+                        content = new HBox(20, label, inviteButton);
                     }
-                }
-            });
-            onlineusers.setItems(observableList);
-        } catch (Exception ex) {
-            Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error in displayOnlineUsers", ex);
-            ex.printStackTrace();
-        }
-    });
-}
- void updateAllCells() {
-                onlineusers.refresh();
+
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setGraphic(null);
+                        } else {
+                            label.setText(item);
+                            inviteButton.setDisable(isAnyButtonDisabled[0]); // Disable button if invite sent
+                            setGraphic(content);
+                        }
+                    }
+                });
+                onlineusers.setItems(observableList);
+            } catch (Exception ex) {
+                Logger.getLogger(DashboardController.class.getName()).log(Level.SEVERE, "Error in displayOnlineUsers", ex);
+                ex.printStackTrace();
             }
+        });
+    }
+
+    void updateAllCells() {
+        onlineusers.refresh();
+    }
 
     void sendInvite(String sender, String receiver) {
         try {
@@ -374,40 +375,67 @@ public class DashboardController implements Initializable {
     }
 
     void showInviteAlert(String txt, Object data) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, txt, ButtonType.YES, ButtonType.NO);
-        Stage currentStage = (Stage) score.getScene().getWindow();
-        alert.initOwner(currentStage);
-        alert.showAndWait().ifPresent(click -> {
-            if (click == ButtonType.NO) {
-                cancelInvite(data);
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.NONE, txt, ButtonType.YES, ButtonType.NO);
+
+            if (score != null && score.getScene() != null) {
+                Stage currentStage = (Stage) score.getScene().getWindow();
+                alert.initOwner(currentStage);
             }
-            if (click == ButtonType.YES) {
-                System.out.println("Accepting invitation with data: " + data);
-                acceptInvite(data);
-            }
+
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+            dialogPane.getStyleClass().add("alert");
+
+            dialogPane.setGraphic(null);
+
+            alert.showAndWait().ifPresent(click -> {
+                if (click == ButtonType.NO) {
+                    cancelInvite(data);
+                } else if (click == ButtonType.YES) {
+                    acceptInvite(data);
+                }
+            });
         });
     }
 
     private void showError(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
+            Alert alert = new Alert(Alert.AlertType.NONE);
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+            dialogPane.getStyleClass().add("alert");
+
+            dialogPane.setGraphic(null);
+
             alert.showAndWait();
         });
     }
 
     private void showAlert(String txt) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            Alert alert = new Alert(Alert.AlertType.NONE);
+            alert.setTitle("Information");
+            alert.setHeaderText(null);
+            alert.setContentText(txt);
+
+            alert.getButtonTypes().add(ButtonType.OK);
+
             if (score != null && score.getScene() != null) {
                 Stage currentStage = (Stage) score.getScene().getWindow();
                 alert.initOwner(currentStage);
             }
-            alert.setHeaderText(txt);
-            alert.getButtonTypes().clear();
-            alert.getButtonTypes().add(ButtonType.CLOSE);
+
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.getStylesheets().add(getClass().getResource("/tictactoe/styles.css").toExternalForm());
+            dialogPane.getStyleClass().add("alert");
+
+            dialogPane.setGraphic(null);
+
             alert.showAndWait();
         });
     }

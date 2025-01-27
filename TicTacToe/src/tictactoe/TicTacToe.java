@@ -12,6 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 /**
@@ -26,7 +27,8 @@ public class TicTacToe extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("Menu.fxml"));
         
         Scene scene = new Scene(root);
-        
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/assets/icon.png")));
+        stage.setTitle("Tic Tac Toe");
         stage.setScene(scene);
         stage.show();
         stage.setOnCloseRequest((event) -> {

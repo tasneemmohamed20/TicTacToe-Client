@@ -30,7 +30,7 @@
             <Label alignment="CENTER" layoutX="308.0" layoutY="74.0" prefHeight="27.0" prefWidth="147.0" style="-fx-text-fill: #DCBF3F; -fx-font-size: 18;" text="Your total score" />
             <ImageView fitHeight="260.0" fitWidth="357.0" layoutY="362.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../assets/tic.%20tac.toe..png" />
+                  <Image url="@../assets/tictactoe.png" />
                </image>
             </ImageView>
             

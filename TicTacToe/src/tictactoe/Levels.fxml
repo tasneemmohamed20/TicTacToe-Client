@@ -5,27 +5,26 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LevelsController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="545.0" prefWidth="726.0" style="-fx-background-color: #5B0F66;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tictactoe.LevelsController">
     
     
         
     <children>
-        <Button id="whiteBtn" fx:id="easyBtn" layoutX="281.0" layoutY="126.0" mnemonicParsing="false" onAction="#handleEasyModeNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Easy" />
+        <Button id="whiteBtn" fx:id="easyBtn" layoutX="331.0" layoutY="246.0" mnemonicParsing="false" onAction="#handleEasyModeNavigation" style="-fx-background-color: #C5A0D7; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Easy" />
             
-        <Button id="whiteBtn" fx:id="hardBtn" layoutX="279.0" layoutY="185.0" mnemonicParsing="false" onAction="#handleHardModeNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Hard" />
-        <ImageView fitHeight="200.0" fitWidth="240.0" layoutY="200.0" pickOnBounds="true" preserveRatio="true">
-            <image>
-                <Image url="/assets/tictactoe.png" />
-            </image>
-        </ImageView>
-        <Button mnemonicParsing="false" onAction="#handleBackButton" prefHeight="54.0" prefWidth="65.0" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="20.0" 
-                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+        <Button id="whiteBtn" fx:id="hardBtn" layoutX="330.0" layoutY="282.0" mnemonicParsing="false" onAction="#handleHardModeNavigation" style="-fx-background-color: white; -fx-text-fill: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-padding: 5px 20px;" styleClass="-fx-text-fill" text="Hard" />
+        <ImageView fitHeight="192.0" fitWidth="200.0" layoutY="353.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+                       <Image url="@../assets/tictactoe.png" />
+                </image>
+            </ImageView>
+        <Button mnemonicParsing="false" onAction="#handleBackButton" prefHeight="54.0" prefWidth="65.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="20.0">
             <graphic>
                 <ImageView fitHeight="40.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true">
-                    <image>
-                        <Image url="@/assets/back-arrow.png" />
-                    </image>
-                </ImageView>
+                          <image>
+                              <Image url="@../assets/back-arrow.png" />
+                          </image>
+                      </ImageView>
             </graphic>
         </Button>
 

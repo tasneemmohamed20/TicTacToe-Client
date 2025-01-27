@@ -18,6 +18,9 @@ import models.UserModel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import javafx.geometry.Pos;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 
 public class SignupController {
 
@@ -74,12 +77,29 @@ public class SignupController {
     }
 
     private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
+    Stage alertStage = new Stage();
+    alertStage.initModality(Modality.APPLICATION_MODAL);
+    alertStage.setTitle(title);
+
+    VBox alertBox = new VBox(15);
+    alertBox.setAlignment(Pos.CENTER);
+    alertBox.getStyleClass().add("custom-alert-box");
+
+    javafx.scene.control.Label messageLabel = new javafx.scene.control.Label(message);
+    messageLabel.getStyleClass().add("custom-alert-label");
+
+    Button okButton = new Button("OK");
+    okButton.getStyleClass().add("custom-alert-button");
+    okButton.setOnAction(e -> alertStage.close());
+
+    alertBox.getChildren().addAll(messageLabel, okButton);
+
+    Scene scene = new Scene(alertBox, 300, 150);
+    scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+    alertStage.setScene(scene);
+    alertStage.showAndWait();
+}
+
 
     @FXML
     private void handleLoginNavigation(ActionEvent event) {

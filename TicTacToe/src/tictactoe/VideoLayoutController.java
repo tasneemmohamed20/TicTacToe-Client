@@ -77,12 +77,12 @@ public class VideoLayoutController implements Initializable {
 
     @FXML
     private void onNewGameClicked(ActionEvent event) {
-        // First stop media player
+       
         if (mediaPlayer != null) {
             mediaPlayer.stop();
         }  
               
-        // Execute new game action to clean up game resources
+        
         if (onNewGameAction != null) {
             onNewGameAction.run();
         }
@@ -92,37 +92,37 @@ public class VideoLayoutController implements Initializable {
     @FXML
     private void onCloseClicked(ActionEvent event) {
         try {
-            // First stop the media player
+            
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
             }
 
-            // Get the current video stage
+           
             Stage videoStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-            // Get the game stage from the singleton application stage
+            
             Stage gameStage = TicTacToe.getPrimaryStage();
 
-            // Send logout request
+            
             PlayerSocket playerSocket = PlayerSocket.getInstance();
             DataOutputStream dos = playerSocket.getDataOutputStream();
             
-            // Create logout request
+           
             Map<String, String> data = new HashMap<>();
-            data.put("username", userName); // You'll need to add userName as a class field
+            data.put("username", userName); 
             String jsonRequest = new Gson().toJson(new RequsetModel("logout", data));
             dos.writeUTF(jsonRequest);
             dos.flush();
             
-            // Load the menu scene
+           
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Menu.fxml"));
             Parent menuRoot = loader.load();
             
-            // Set the menu scene on the main stage
+            
             gameStage.setScene(new Scene(menuRoot));
             gameStage.show();
             
-            // Close the video window
+            
             videoStage.close();
 
         } catch (IOException ex) {

@@ -74,8 +74,9 @@ public class LocalHvsHcontroller implements Initializable {
     private Button backButton;
     private boolean isRecording = false;
     GameRecord record;
-     String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-      String recordFileName = "game_record_" + timestamp + ".txt";
+    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    String recordFileName = "game_record_" + timestamp + ".txt";
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         gameBoard = new GameBoard();
@@ -94,12 +95,11 @@ public class LocalHvsHcontroller implements Initializable {
         if (gameBoard.placeXO(row, col)) {
 
             ImageView imageView = new ImageView(gameBoard.isCross() ? xImage : oImage);
-             if (isRecording)
-           {
-                record.saveMove(new Move(gameBoard.isCross() ? "X" : "O" ,getCellId(row , col)) , recordFileName);
+            if (isRecording) {
+                record.saveMove(new Move(gameBoard.isCross() ? "X" : "O", getCellId(row, col)), recordFileName);
                 //System.out.println("File saved to: " + new File("rec.txt").getAbsolutePath());
 
-           }
+            }
             imageView.setFitHeight(80);
             imageView.setFitWidth(80);
             clickedButton.setGraphic(imageView);
@@ -202,18 +202,23 @@ public class LocalHvsHcontroller implements Initializable {
         }
     }
 
-    private void showAlert(String title, String message, AlertType alertType) {
+    private void showAlert(String title, String message, Alert.AlertType alertType) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
 
         DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.setPrefWidth(300);
-        dialogPane.setPrefHeight(150);
-        dialogPane.setStyle("-fx-background-color: #5A1E76; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
-        Label content = (Label) dialogPane.lookup(".content");
-        content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        dialogPane.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        dialogPane.getStyleClass().add("alert");
+
+        dialogPane.getButtonTypes().forEach(buttonType -> {
+            Button button = (Button) dialogPane.lookupButton(buttonType);
+            if (button != null) {
+                button.getStyleClass().add("custom-alert-button");
+            }
+        });
+
         alert.showAndWait();
     }
 
@@ -277,11 +282,13 @@ public class LocalHvsHcontroller implements Initializable {
     private void handleBackButton(ActionEvent event) {
         new LoginController().navigateToScreen(event, "Menu.fxml", "Menu");
     }
+
     private String getCellId(int row, int col) {
-    int cellIndex = (row * 3) + col + 1; 
-    return "cell" + cellIndex; 
-}
- @FXML
+        int cellIndex = (row * 3) + col + 1;
+        return "cell" + cellIndex;
+    }
+
+    @FXML
     private void handleRecordButton(ActionEvent event) {
         if (!isRecording) {
             isRecording = true;
